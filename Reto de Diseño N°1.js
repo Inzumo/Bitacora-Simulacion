@@ -1,14 +1,3 @@
-/**
- * ==============================================================================
- * PROYECTO: ONE PIECE NAVAL EXPERIENCE (HD-2D PIXEL ART) - ACT. 07 HYBRID
- * FORMATO: 9:16 (Lienzo virtual 384x672 escalado dinámicamente)
- * ==============================================================================
- * Ajustes:
- * 1. Capas de agua corregidas (el barco navega por encima del mar).
- * 2. Textos de la UI RPG aumentados de tamaño para mejorar la legibilidad.
- * ==============================================================================
- */
-
 // --- CONFIGURACIÓN DE RESOLUCIÓN Y CANVAS VIRTUAL ---
 const RES_X = 384;
 const RES_Y = 672;
