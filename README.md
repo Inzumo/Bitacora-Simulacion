@@ -44,5 +44,5 @@ Proceso documentado: la bitácora evidencia avances, decisiones, dificultades, s
 
 Cumplo
 
-https://github.com/Inzumo/Bitacora-Simulacion
+[https://github.com/Inzumo/Bitacora-Simulacion](https://editor.p5js.org/Izumy/sketches/aKVlzFRKn)
 
