@@ -44,6 +44,5 @@ Proceso documentado: la bitácora evidencia avances, decisiones, dificultades, s
 
 Cumplo
 
-No tengo link pero el cofigo esta en en Reto de diseño
-
+https://github.com/Inzumo/Bitacora-Simulacion
 
