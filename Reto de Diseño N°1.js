@@ -3,22 +3,24 @@ const RES_X = 384;
 const RES_Y = 672;
 
 let buffer; // Offscreen graphics buffer para garantizar pixelation
-let t = 0;   // Contador de tiempo global para animaciones sinusoidales y noise
+let t = 0;   // Contador de tiempo global
 
-// --- ESTADO DE NAVEGACIÓN Y TRANSICIÓN ---
-let barcoActualIndex = 0;
-let barcoTransicionIndex = 0;
+// --- ESTADO DE NAVEGACIÓN Y MOMENTOS (ACT. 07) ---
+// 0: POSIBILIDAD, 1: TENDENCIA, 2: NORMALIDAD, 3: EXCEPCIÓN, 4: INFLUENCIA
+let momentoActual = 0; 
 let factorTransicion = 1; // 1 = Totalmente visible, 0 = Transición activa
 let animacionOpacidad = 255;
 
-// --- ELEMENTOS DE AMBIENTE PROCEDURAL ---
-let estrellas = [];
-let nubes = [];
-let particulasLuz = [];
-let peces = [];
-let gaviotas = [];
+// --- POSICIÓN Y FÍSICA ESTOCÁSTICA ---
+let posX, posY;
+let velX = 0, velY = 0;
+let estela = [];
 
-// --- BASE DE DATOS FILTRADA: SOLO BARCOS PROPIEDAD DE LUFFY ---
+// --- SELECCIÓN DE BARCOS Y LORE ---
+let barcoActualIndex = 0;
+let barcoTransicionIndex = 0;
+
+// --- BASE DE DATOS DETALLADA DE BARCOS ---
 const BASE_DATOS_BARCOS = [
   {
     nombre: "GOING MERRY",
@@ -46,6 +48,13 @@ const BASE_DATOS_BARCOS = [
   }
 ];
 
+// --- ELEMENTOS DE AMBIENTE PROCEDURAL HD ---
+let estrellas = [];
+let nubes = [];
+let particulasLuz = [];
+let peces = [];
+let gaviotas = [];
+
 // ==============================================================================
 // SETUP & INICIALIZACIÓN
 // ==============================================================================
@@ -57,6 +66,11 @@ function setup() {
   buffer = createGraphics(RES_X, RES_Y);
   buffer.noSmooth();
 
+  // Posición inicial de navegación
+  posX = RES_X / 2;
+  posY = RES_Y * 0.58;
+
+  // Elementos ambientales
   for (let i = 0; i < 90; i++) {
     estrellas.push({
       x: random(RES_X),
@@ -106,41 +120,62 @@ function setup() {
 }
 
 // ==============================================================================
-// BUCLE PRINCIPAL DE RENDERIZADO
+// BUCLE PRINCIPAL DE RENDERIZADO (ORDEN DE CAPAS CORREGIDO)
 // ==============================================================================
 function draw() {
   buffer.push();
   
-  // Factor del ciclo día/noche (0 = Noche profunda, 1 = Día soleado)
-  let factorDia = (sin(t * 0.1) + 1) / 2;
+  let factorDia = (sin(t * 0.1) + 1) / 2; // Ciclo día/noche
 
   // --- CÁMARA FLOTANTE DINÁMICA ---
   let camX = sin(t * 0.8) * 1.5;
   let camY = cos(t * 0.6) * 1.5;
   buffer.translate(camX, camY);
 
-  // --- RENDERS DE ESCENA ---
+  // --- 1. RENDERS DE FONDO Y CIELO ---
   dibujarCielo(factorDia);
   dibujarAstroYBrillo(factorDia);
   dibujarNubes(factorDia);
   dibujarGaviotas(factorDia);
+
+  // --- 2. RENDERS DEL MAR (FONDO Y FRENTE) ---
+  // Se renderizan TODAS las capas de agua antes del barco
   dibujarMarFondo(factorDia);
-
-  // --- RENDERIZADO DE BARCOS ---
-  dibujarEscenaBarco(factorDia);
-
   dibujarMarFrente(factorDia);
   dibujarPeces();
+
+  // --- 3. CICLO AUTÓNOMO DE MOMENTOS (ACT. 07) ---
+  if (!mouseIsPressed && frameCount % 480 === 0) {
+    momentoActual = (momentoActual + 1) % 5;
+  }
+
+  // Comprobar si el usuario ejerce el MOMENTO 5: INFLUENCIA
+  let momentoEfectivo = momentoActual;
+  let mx = map(mouseX, 0, width, 0, RES_X);
+  let my = map(mouseY, 0, height, 0, RES_Y);
+
+  if (mouseIsPressed || (mouseX > 0 && mouseX < width && mouseY > 0 && mouseY < height)) {
+    if (dist(mx, my, posX, posY) < 120) {
+      momentoEfectivo = 4;
+    }
+  }
+
+  // --- 4. ACTUALIZACIÓN Y RENDERIZADO DEL BARCO (SOBRE EL AGUA) ---
+  actualizarNavegacionEstocastica(momentoEfectivo, mx, my);
+  dibujarEstela();
+  dibujarEscenaBarco(factorDia);
+
+  // --- 5. EFECTOS ATMOSFÉRICOS Y LUZ ---
   dibujarParticulasAmbiente(factorDia);
   dibujarEfectosIluminacionHD(factorDia);
 
   buffer.pop(); // Reset de cámara
 
-  // --- INTERFAZ RPG ---
+  // --- 6. INTERFAZ RPG Y TRANSICIONES ---
   dibujarUI();
   gestionarTransicion();
 
-  // --- ESCALADO AL CANVAS ---
+  // ESCALADO FULLSCREEN 9:16
   noSmooth();
   image(buffer, 0, 0, width, height);
 
@@ -148,31 +183,72 @@ function draw() {
 }
 
 // ==============================================================================
-// AMBIENTE DÍA / NOCHE (CIELO, SOL, LUNA, MAR)
+// MOTOR DE ALEATORIEDAD ESTOCÁSTICA (ACT. 07)
 // ==============================================================================
+function actualizarNavegacionEstocastica(momento, mx, my) {
+  let fuerzaX = 0;
+  let fuerzaY = 0;
 
+  switch (momento) {
+    case 0: // 1. POSIBILIDAD (Random Walk)
+      fuerzaX = random(-1.6, 1.6);
+      fuerzaY = random(-1.0, 1.0);
+      break;
+
+    case 1: // 2. TENDENCIA (Perlin Noise)
+      let angulo = noise(posX * 0.006, posY * 0.006, t * 0.4) * TWO_PI * 2;
+      fuerzaX = cos(angulo) * 2.0 + 0.4;
+      fuerzaY = sin(angulo) * 0.9;
+      break;
+
+    case 2: // 3. NORMALIDAD (Distribución Gaussiana)
+      let centroX = RES_X / 2;
+      let centroY = RES_Y * 0.58;
+      fuerzaX = (centroX - posX) * 0.035 + randomGaussian(0, 0.9);
+      fuerzaY = (centroY - posY) * 0.035 + randomGaussian(0, 0.6);
+      break;
+
+    case 3: // 4. EXCEPCIÓN (Vuelo de Lévy)
+      let paso = random(1) < 0.02 ? random(30, 60) : random(0.3, 0.9);
+      let dir = random(TWO_PI);
+      fuerzaX = cos(dir) * paso;
+      fuerzaY = sin(dir) * paso;
+      break;
+
+    case 4: // 5. INFLUENCIA (Atracción Directa)
+      fuerzaX = (mx - posX) * 0.04 + randomGaussian(0, 0.6);
+      fuerzaY = (my - posY) * 0.04 + randomGaussian(0, 0.6);
+      break;
+  }
+
+  velX = lerp(velX, fuerzaX, 0.1);
+  velY = lerp(velY, fuerzaY, 0.1);
+
+  posX = constrain(posX + velX, 60, RES_X - 60);
+  posY = constrain(posY + velY, RES_Y * 0.50, RES_Y * 0.68);
+
+  estela.push({ x: posX, y: posY + 15, alpha: 200 });
+  if (estela.length > 40) estela.shift();
+}
+
+// ==============================================================================
+// AMBIENTE DÍA / NOCHE Y EFECTOS VISUALES HD
+// ==============================================================================
 function dibujarCielo(factorDia) {
   buffer.noStroke();
   for (let y = 0; y < RES_Y * 0.55; y += 2) {
     let inter = map(y, 0, RES_Y * 0.55, 0, 1);
-    
-    // Colores de Noche
     let cNoche1 = color(8, 12, 28);
     let cNoche2 = color(25, 45, 80);
-    
-    // Colores de Día
     let cDia1 = color(100, 180, 245);
     let cDia2 = color(190, 230, 255);
 
     let c1 = lerpColor(cNoche1, cDia1, factorDia);
     let c2 = lerpColor(cNoche2, cDia2, factorDia);
-    let c = lerpColor(c1, c2, inter);
-    
-    buffer.fill(c);
+    buffer.fill(lerpColor(c1, c2, inter));
     buffer.rect(0, y, RES_X, 2);
   }
 
-  // Estrellas (Visibles solo de noche)
   if (factorDia < 0.5) {
     let alphaEstrellas = map(factorDia, 0, 0.5, 255, 0);
     for (let e of estrellas) {
@@ -185,12 +261,10 @@ function dibujarCielo(factorDia) {
 
 function dibujarAstroYBrillo(factorDia) {
   let ax = RES_X * 0.78;
-  let ay = map(factorDia, 0, 1, 100, 50); // Movimiento sutil de altura
-
+  let ay = map(factorDia, 0, 1, 100, 50);
   buffer.noStroke();
 
   if (factorDia > 0.5) {
-    // SOL
     let alphaSol = map(factorDia, 0.5, 1, 0, 255);
     for (let r = 35; r > 0; r -= 4) {
       buffer.fill(255, 220, 100, map(r, 0, 35, 60, 0) * (alphaSol / 255));
@@ -199,7 +273,6 @@ function dibujarAstroYBrillo(factorDia) {
     buffer.fill(255, 240, 150, alphaSol);
     buffer.ellipse(ax, ay, 28, 28);
   } else {
-    // LUNA
     let alphaLuna = map(factorDia, 0, 0.5, 255, 0);
     for (let r = 35; r > 0; r -= 4) {
       buffer.fill(220, 240, 255, map(r, 0, 35, 40, 0) * (alphaLuna / 255));
@@ -249,7 +322,6 @@ function dibujarGaviotas(factorDia) {
 function dibujarMarFondo(factorDia) {
   buffer.noStroke();
   let inicioMar = RES_Y * 0.50;
-
   let cMarNoche = color(18, 45, 85);
   let cMarDia = color(0, 135, 200);
 
@@ -257,12 +329,10 @@ function dibujarMarFondo(factorDia) {
     let inter = map(y, inicioMar, RES_Y, 0, 1);
     let cBase1 = lerpColor(cMarNoche, cMarDia, factorDia);
     let cBase2 = lerpColor(color(10, 25, 50), color(0, 80, 140), factorDia);
-    
-    let c = lerpColor(cBase1, cBase2, inter);
-    buffer.fill(c);
+
+    buffer.fill(lerpColor(cBase1, cBase2, inter));
     buffer.rect(0, y, RES_X, 3);
 
-    // Reflejo dinámico del Astro
     let n = noise(y * 0.05, t * 0.5);
     if (n > 0.4) {
       let refX = RES_X * 0.78 + sin(y * 0.1 + t) * 15;
@@ -324,7 +394,6 @@ function dibujarParticulasAmbiente(factorDia) {
 }
 
 function dibujarEfectosIluminacionHD(factorDia) {
-  // Ajuste sutil de sombra en bordes según la hora
   buffer.noFill();
   let alphaVignette = map(factorDia, 0, 1, 80, 30);
   for (let i = 0; i < 15; i++) {
@@ -334,30 +403,43 @@ function dibujarEfectosIluminacionHD(factorDia) {
   }
 }
 
-// ==============================================================================
-// GESTIÓN DE RENDERIZADO Y FÍSICA DEL BARCO
-// ==============================================================================
+function dibujarEstela() {
+  buffer.noStroke();
+  for (let i = 0; i < estela.length; i++) {
+    let e = estela[i];
+    let tam = map(i, 0, estela.length, 3, 32);
+    let alp = map(i, 0, estela.length, 5, 170);
 
+    buffer.fill(240, 252, 255, alp);
+    buffer.ellipse(e.x, e.y, tam, tam * 0.28);
+    buffer.fill(0, 180, 220, alp * 0.4);
+    buffer.ellipse(e.x, e.y + 1, tam * 1.1, tam * 0.35);
+  }
+}
+
+// ==============================================================================
+// GESTIÓN Y RENDERIZADO DETALLADO DE LOS BARCOS
+// ==============================================================================
 function dibujarEscenaBarco(factorDia) {
   let elevacionOla = sin(t * 2) * 5 + noise(t) * 3;
   let anguloMecido = cos(t * 1.4) * 0.05 + (noise(t * 0.5) - 0.5) * 0.03;
 
   buffer.push();
-  buffer.translate(RES_X * 0.5, RES_Y * 0.58 + elevacionOla);
+  buffer.translate(posX, posY + elevacionOla);
   buffer.rotate(anguloMecido);
 
-  // Sombra del barco sobre el mar
+  // Sombra proyectada
   buffer.noStroke();
   buffer.fill(5, 15, 35, map(factorDia, 0, 1, 130, 80));
   buffer.ellipse(0, 22, 120, 18);
 
-  // Espuma de la proa
+  // Espuma
   if (elevacionOla > 2) {
     buffer.fill(240, 250, 255, 200);
     buffer.rect(-55, 15, 110, 3, 2);
   }
 
-  // Tinte dinámico día/noche sobre los sprites
+  // Tinte Día/Noche sobre el sprite
   let tinteOscuro = map(factorDia, 0, 1, 170, 255);
   buffer.tint(tinteOscuro, tinteOscuro, tinteOscuro + map(factorDia, 0, 1, 20, 0), animacionOpacidad);
 
@@ -374,11 +456,8 @@ function renderizarBarcoPorIndice(idx) {
   }
 }
 
-// ==============================================================================
-// RENDERIZADO PIXEL ART DE LOS BARCOS DE LUFFY
-// ==============================================================================
+// --- SPRITES AVANZADOS DE LUFFY ---
 
-// --- 1. GOING MERRY ---
 function dibujarGoingMerry() {
   buffer.noStroke();
 
@@ -418,7 +497,7 @@ function dibujarGoingMerry() {
   buffer.fill(210, 205, 190);
   buffer.rect(-28 + defViento, -32, 56, 4);
 
-  // JOLLY ROGER DE LUFFY
+  // JOLLY ROGER
   buffer.fill(30);
   buffer.rect(-10 + defViento, -58, 20, 3);
   buffer.fill(240, 180, 0);
@@ -431,7 +510,7 @@ function dibujarGoingMerry() {
   buffer.rect(-5 + defViento, -52, 4, 4);
   buffer.rect(1 + defViento, -52, 4, 4);
 
-  // MASCARÓN DE PROA: CABEZA DE OVEJA
+  // MASCARÓN OVEJA
   buffer.fill(240, 240, 235);
   buffer.rect(46, -24, 16, 14);
   buffer.rect(48, -26, 12, 4);
@@ -450,7 +529,6 @@ function dibujarGoingMerry() {
   buffer.triangle(-2, -75, -15 + ond, -70, -2, -65);
 }
 
-// --- 2. THOUSAND SUNNY ---
 function dibujarThousandSunny() {
   buffer.noStroke();
 
@@ -488,7 +566,7 @@ function dibujarThousandSunny() {
   buffer.rect(-48 + def, -80, 32, 48);
   buffer.rect(8 + def, -80, 34, 48);
 
-  // MASCARÓN: SOL / LEÓN
+  // MASCARÓN LEÓN/SOL
   buffer.fill(255, 100, 0);
   buffer.ellipse(58, -18, 30, 30);
   for (let a = 0; a < TWO_PI; a += PI / 4) {
@@ -509,7 +587,6 @@ function dibujarThousandSunny() {
   buffer.rect(-20, -92, 12 + ond, 6);
 }
 
-// --- 3. MINI MERRY II ---
 function dibujarMiniMerry() {
   buffer.noStroke();
   buffer.fill(140, 80, 40);
@@ -535,9 +612,8 @@ function dibujarMiniMerry() {
 }
 
 // ==============================================================================
-// INTERFAZ DE USUARIO (UI) ESTILO RPG
+// INTERFAZ DE USUARIO (UI RPG)
 // ==============================================================================
-
 function dibujarUI() {
   let data = BASE_DATOS_BARCOS[barcoActualIndex];
 
