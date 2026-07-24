@@ -1,3 +1,14 @@
+/**
+ * ==============================================================================
+ * PROYECTO: ONE PIECE NAVAL EXPERIENCE (HD-2D PIXEL ART) - ACT. 07 HYBRID
+ * FORMATO: 9:16 (Lienzo virtual 384x672 escalado dinámicamente)
+ * ==============================================================================
+ * Ajustes:
+ * 1. Capas de agua corregidas (el barco navega por encima del mar).
+ * 2. Textos de la UI RPG aumentados de tamaño para mejorar la legibilidad.
+ * ==============================================================================
+ */
+
 // --- CONFIGURACIÓN DE RESOLUCIÓN Y CANVAS VIRTUAL ---
 const RES_X = 384;
 const RES_Y = 672;
@@ -120,7 +131,7 @@ function setup() {
 }
 
 // ==============================================================================
-// BUCLE PRINCIPAL DE RENDERIZADO (ORDEN DE CAPAS CORREGIDO)
+// BUCLE PRINCIPAL DE RENDERIZADO
 // ==============================================================================
 function draw() {
   buffer.push();
@@ -139,7 +150,6 @@ function draw() {
   dibujarGaviotas(factorDia);
 
   // --- 2. RENDERS DEL MAR (FONDO Y FRENTE) ---
-  // Se renderizan TODAS las capas de agua antes del barco
   dibujarMarFondo(factorDia);
   dibujarMarFrente(factorDia);
   dibujarPeces();
@@ -612,47 +622,56 @@ function dibujarMiniMerry() {
 }
 
 // ==============================================================================
-// INTERFAZ DE USUARIO (UI RPG)
+// INTERFAZ DE USUARIO (UI RPG) - TEXTOS AMPLIADOS
 // ==============================================================================
 function dibujarUI() {
   let data = BASE_DATOS_BARCOS[barcoActualIndex];
 
+  // Contenedor principal
   buffer.fill(10, 16, 28, 235);
   buffer.stroke(data.colorTema[0], data.colorTema[1], data.colorTema[2]);
   buffer.strokeWeight(2);
-  buffer.rect(12, RES_Y - 175, RES_X - 24, 160, 6);
+  buffer.rect(12, RES_Y - 185, RES_X - 24, 170, 6);
 
+  // Marco interior
   buffer.stroke(40, 60, 90);
   buffer.strokeWeight(1);
-  buffer.rect(16, RES_Y - 171, RES_X - 32, 152, 4);
+  buffer.rect(16, RES_Y - 181, RES_X - 32, 162, 4);
 
+  // Nombre del Barco
   buffer.noStroke();
   buffer.fill(data.colorTema);
-  buffer.textSize(14);
+  buffer.textSize(18); // Aumentado de 14 a 18
   buffer.textStyle(BOLD);
   buffer.textAlign(LEFT);
-  buffer.text(data.nombre, 26, RES_Y - 148);
+  buffer.text(data.nombre, 24, RES_Y - 156);
 
+  // Indicador de selección
   buffer.fill(180, 195, 210);
-  buffer.textSize(9);
+  buffer.textSize(12); // Aumentado de 9 a 12
   buffer.textStyle(NORMAL);
-  buffer.text(`NAVIO ${barcoActualIndex + 1} DE ${BASE_DATOS_BARCOS.length}`, RES_X - 110, RES_Y - 148);
+  buffer.text(`${barcoActualIndex + 1}/${BASE_DATOS_BARCOS.length}`, RES_X - 52, RES_Y - 156);
 
+  // Información de la base de datos
   buffer.fill(230, 240, 255);
-  buffer.textSize(9);
-  buffer.text(`• Saga: ${data.saga}`, 26, RES_Y - 130);
-  buffer.text(`• Debut: ${data.primeraAparicion}`, 26, RES_Y - 116);
-  buffer.text(`• Cierre: ${data.ultimaAparicion}`, 26, RES_Y - 102);
+  buffer.textSize(12); // Aumentado de 9 a 12
+  buffer.text(`• Saga: ${data.saga}`, 24, RES_Y - 136);
+  buffer.text(`• Debut: ${data.primeraAparicion}`, 24, RES_Y - 120);
+  buffer.text(`• Cierre: ${data.ultimaAparicion}`, 24, RES_Y - 104);
 
+  // Lore / Curiosidad
   buffer.fill(170, 195, 220);
+  buffer.textSize(11); // Aumentado de 9 a 11
   buffer.textStyle(ITALIC);
-  buffer.text(`"${data.curiosidad}"`, 26, RES_Y - 84, RES_X - 52, 38);
+  buffer.text(`"${data.curiosidad}"`, 24, RES_Y - 86, RES_X - 48, 45);
 
+  // Indicador de interacción parpadeante
   let parpadeo = sin(t * 6) * 120 + 135;
   buffer.fill(0, 220, 255, parpadeo);
+  buffer.textSize(11); // Aumentado de 9 a 11
   buffer.textStyle(BOLD);
   buffer.textAlign(CENTER);
-  buffer.text("► HAZ CLIC PARA CAMBIAR EL BARCO DE LUFFY ◄", RES_X / 2, RES_Y - 24);
+  buffer.text("► HAZ CLIC PARA CAMBIAR EL BARCO ◄", RES_X / 2, RES_Y - 22);
 }
 
 // --- INTERACCIÓN Y TRANSICIÓN ---
