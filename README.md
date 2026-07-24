@@ -12,6 +12,10 @@ Lo primero que hice de cofigo fue generar una estrella con apollo del primer cod
 
 Luego hice un rentangulo simulando un barco y luego le pedia a la ia que los pusiera bonitos y fue un martirio póque le pedia el cambio de uno de los barcos y cambiaba todos, la verdad viendo los pixelars que hzo la ia su tuviera mas tiempo los ahria yo mismo porque si pudieron ser mucho mejores por que el sunny  si esta feito pero es lo que hay.
 
+
+<img width="448" height="788" alt="image" src="https://github.com/user-attachments/assets/606bd945-855b-40c9-8ea4-084736297e03" />
+
+
 Encargo completo: interpreto los cinco momentos dentro de un mismo sistema visual.
 
 Cumplo con los 5 momentos.
@@ -41,4 +45,5 @@ Proceso documentado: la bitácora evidencia avances, decisiones, dificultades, s
 Cumplo
 
 No tengo link pero el cofigo esta en en Reto de diseño
+
 
