@@ -1,5 +1,10 @@
 # Bitacora-Simulacion
 
-Reto de Diseño N°1
+Reto de Diseño N°2
 
-Uno de los retos fue encontar que tensión queria explorar y empece con el cofigo sin pensarlo mucho lo cual no fue buena idea porque nada de lo que veia en el xomportamiento de las particulas me gustaba y asi estucve un muy buen rato y dije que tak una comunidad pero a hora la cuestio era cual y descartando varios me fui por las avejas
+Uno de los retos fue encontrar qué tensión quería explorar. Empecé haciendo el código sin pensarlo mucho, pero no me gustaba el comportamiento de las partículas y estuve bastante rato probando cosas sin llegar a nada.
+
+Después pensé en hacer una comunidad, pero faltaba decidir cuál. Descarté varias ideas hasta que llegué a las abejas. Me gustó porque tienen una tensión que podía representar con las partículas: necesitan estar juntas para protegerse, pero algunas tienen que alejarse para explorar y buscar recursos.
+
+A partir de ahí pensé en hacer diferentes tipos de abejas, unas más cercanas a la colonia, otras exploradoras y otras que representaran amenazas. La idea es que sus relaciones hagan que el comportamiento aparezca por sí solo, en lugar de programar directamente cómo deben moverse.
+
