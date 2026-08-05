@@ -33,7 +33,7 @@ https://editor.p5js.org/Izumy/sketches/KA7xKocm9
 | **El sistema produce variaciones con una identidad reconocible.** | **15%** | **100%** | Gracias a las semillas estocásticas y la navegación por ruido Perlin de las amenazas, el sistema genera patrones únicos en cada ejecución, pero sin perder nunca su identidad ni su estética de enjambre. |
 | **Experimenté, comparé, seleccioné y descarté con criterios claros.** | **10%** | **100%** | Hubo un proceso claro de prueba y error: descarté la atracción simple a punto fijo porque congelaba el núcleo, eliminé el texto en pantalla para no saturar la vista y elegí una fuerza tangencial para darle flujo de fluido al centro. |
 | **Puedo distinguir y sustentar lo diseñado y lo emergente.** | **10%** | **100%** | Distingo claramente las reglas físicas que programé (fuerzas y umbrales de distancia) de los fenómenos que emergen solos, como los "corredores de evasión" o las ondas de presión cuando pasa un perturbador. |
-| **TOTAL** | **100%** | **100%** | **Nota Global: 5.0 / 5.0** |
+| **TOTAL** | **100%** | **100%** | **Nota: 5.0 ** |
 
 ---
 
