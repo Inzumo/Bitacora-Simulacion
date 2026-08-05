@@ -2,6 +2,10 @@
 
 Reto de Diseño N°2
 
+Uno de los retos fue encontrar qué tensión quería explorar. Empecé haciendo el código sin pensarlo mucho, pero no me gustaba el comportamiento de las partículas y estuve bastante rato probando cosas sin llegar a nada.
+
+Después pensé en hacer una comunidad, pero faltaba decidir cuál. Descarté varias ideas hasta que llegué a las abejas. Me gustó porque tienen una tensión que podía representar con las partículas: necesitan estar juntas para protegerse, pero algunas tienen que alejarse para explorar y buscar recursos.
+
 Después de decidir que quería trabajar con abejas, la tensión que escogí fue entre seguridad colectiva y exploración individual. La idea es que una colonia necesita mantenerse unida para protegerse, pero al mismo tiempo necesita que algunas abejas se alejen para buscar recursos. Quiero que esto se vea en el movimiento de las partículas, haciendo que el enjambre se concentre o se disperse dependiendo de lo que esté pasando.
 
 Decidí trabajar con tres tipos de partículas: obreras, exploradoras y amenazas. Las obreras serían la mayoría porque quiero que se note el comportamiento de la colonia. Las exploradoras serían menos numerosas y tendrían más libertad para alejarse, mientras que las amenazas servirían para alterar el comportamiento del enjambre. También agregué recursos que las exploradoras puedan buscar.
