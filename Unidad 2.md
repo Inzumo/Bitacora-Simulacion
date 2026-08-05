@@ -18,6 +18,9 @@ Las amenazas tendrán una fuerza de repulsión sobre las abejas, haciendo que cu
 
 Por ahora quiero mantener las posiciones iniciales aleatorias para que cada ejecución pueda producir un resultado diferente. También quiero probar diferentes intensidades de exploración, cohesión y amenazas para encontrar un equilibrio donde se pueda ver claramente la tensión entre permanecer juntas y alejarse.
 
+<img width="946" height="724" alt="image" src="https://github.com/user-attachments/assets/a5c5f6ed-a6cc-48de-9ae7-4f178878f883" />
+
+
 https://editor.p5js.org/Izumy/sketches/KA7xKocm9
 
 ## Tabla de Criterios
