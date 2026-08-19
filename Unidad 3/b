@@ -1,0 +1,711 @@
+import * as THREE from 'three';
+import { WebGPURenderer } from 'three/webgpu';
+import {
+    SpriteNodeMaterial,
+    color
+} from 'three/tsl';
+
+import {
+    createSimulation
+} from './simulation/createSimulation.js';
+
+import {
+    createLabPanel
+} from './ui/labPanel.js';
+
+
+/*
+ * ================================================================
+ * CONFIGURACIÓN
+ * ================================================================
+ */
+
+const PARTICLE_COUNT = 20000;
+
+const WORLD_WIDTH = 32;
+const WORLD_HEIGHT = 20;
+
+const CAMERA_Z = 30;
+
+const FIXED_DT = 0.016;
+
+
+/*
+ * ================================================================
+ * SOPORTE WEBGPU
+ * ================================================================
+ */
+
+if (!navigator.gpu) {
+
+    document.body.innerHTML = `
+        <div style="
+            position:fixed;
+            inset:0;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            background:#0b0d12;
+            color:white;
+            font-family:system-ui,sans-serif;
+            text-align:center;
+            padding:30px;
+        ">
+            <div>
+                <h1>WebGPU no disponible</h1>
+                <p>
+                    Este proyecto utiliza Compute Shaders de Three.js
+                    y necesita un navegador con soporte WebGPU.
+                </p>
+                <p style="opacity:.55">
+                    Usa una versión reciente de Chrome, Edge o un
+                    navegador con WebGPU habilitado.
+                </p>
+            </div>
+        </div>
+    `;
+
+    throw new Error(
+        'WebGPU no está disponible en este navegador.'
+    );
+}
+
+
+/*
+ * ================================================================
+ * RENDERER
+ * ================================================================
+ */
+
+const renderer =
+    new WebGPURenderer({
+        antialias: true,
+        powerPreference: 'high-performance'
+    });
+
+renderer.setPixelRatio(
+    Math.min(
+        window.devicePixelRatio,
+        2
+    )
+);
+
+renderer.setSize(
+    window.innerWidth,
+    window.innerHeight
+);
+
+renderer.setAnimationLoop(
+    animate
+);
+
+document.body.style.margin = '0';
+document.body.style.overflow = 'hidden';
+
+document.body.appendChild(
+    renderer.domElement
+);
+
+
+/*
+ * ================================================================
+ * ESCENA
+ * ================================================================
+ */
+
+const scene =
+    new THREE.Scene();
+
+scene.background =
+    new THREE.Color(
+        0x05070b
+    );
+
+
+/*
+ * ================================================================
+ * CÁMARA ORTOGRÁFICA
+ * ================================================================
+ *
+ * El campo de partículas funciona como un instrumento 2D dentro
+ * de un espacio 3D.
+ */
+
+const aspect =
+    window.innerWidth /
+    window.innerHeight;
+
+const cameraHeight =
+    WORLD_HEIGHT;
+
+const cameraWidth =
+    cameraHeight * aspect;
+
+const camera =
+    new THREE.OrthographicCamera(
+        -cameraWidth / 2,
+        cameraWidth / 2,
+        cameraHeight / 2,
+        -cameraHeight / 2,
+        0.1,
+        100
+    );
+
+camera.position.set(
+    0,
+    0,
+    CAMERA_Z
+);
+
+camera.lookAt(
+    0,
+    0,
+    0
+);
+
+
+/*
+ * ================================================================
+ * SIMULACIÓN GPU
+ * ================================================================
+ */
+
+const simulation =
+    createSimulation({
+
+        particleCount:
+            PARTICLE_COUNT,
+
+        mass:
+            1.0,
+
+        drag:
+            0.18,
+
+        radialStrength:
+            5.0,
+
+        radialSoftening:
+            0.7,
+
+        vortexStrength:
+            1.5,
+
+        vortexSoftening:
+            0.8,
+
+        turbulenceStrength:
+            0.15,
+
+        turbulenceFrequency:
+            0.35,
+
+        maxSpeed:
+            12.0,
+
+        dt:
+            FIXED_DT,
+
+        initialSpread:
+            9.0,
+
+        initialVelocity:
+            0.8
+
+    });
+
+
+/*
+ * ================================================================
+ * MATERIAL DE PARTÍCULAS
+ * ================================================================
+ *
+ * SpriteNodeMaterial permite renderizar sprites instanciados.
+ *
+ * positionBuffer.toAttribute() convierte el storage buffer
+ * calculado por el compute shader en el nodo utilizado para
+ * posicionar las instancias durante el render.
+ */
+
+const particleMaterial =
+    new SpriteNodeMaterial({
+
+        color:
+            0xffffff,
+
+        transparent:
+            true,
+
+        depthWrite:
+            false,
+
+        depthTest:
+            false
+    });
+
+
+particleMaterial.positionNode =
+    simulation.positionBuffer.toAttribute();
+
+
+/*
+ * Tamaño visual de las partículas.
+ */
+particleMaterial.scaleNode =
+    new THREE.Vector2(
+        0.055,
+        0.055
+    );
+
+
+/*
+ * Material ligeramente emisivo mediante color plano.
+ */
+particleMaterial.colorNode =
+    color(
+        0x9fdcff
+    );
+
+
+/*
+ * ================================================================
+ * SPRITE INSTANCIADO
+ * ================================================================
+ *
+ * Sprite.count permite crear miles de sprites desde una sola
+ * instancia utilizando WebGPU.
+ */
+
+const particles =
+    new THREE.Sprite(
+        particleMaterial
+    );
+
+particles.count =
+    PARTICLE_COUNT;
+
+scene.add(
+    particles
+);
+
+
+/*
+ * ================================================================
+ * ATRACTOR VISUAL
+ * ================================================================
+ *
+ * Este objeto se queda en CPU porque únicamente es una ayuda
+ * visual. La posición física real vive en el uniform GPU.
+ */
+
+const attractorGeometry =
+    new THREE.RingGeometry(
+        0.12,
+        0.16,
+        32
+    );
+
+const attractorMaterial =
+    new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        transparent: true,
+        opacity: 0.85
+    });
+
+const attractor =
+    new THREE.Mesh(
+        attractorGeometry,
+        attractorMaterial
+    );
+
+attractor.position.set(
+    0,
+    0,
+    0
+);
+
+scene.add(
+    attractor
+);
+
+
+/*
+ * Segundo anillo visual.
+ */
+const attractorRingGeometry =
+    new THREE.RingGeometry(
+        0.28,
+        0.31,
+        32
+    );
+
+const attractorRingMaterial =
+    new THREE.MeshBasicMaterial({
+        color: 0x7fb8ff,
+        transparent: true,
+        opacity: 0.25
+    });
+
+const attractorRing =
+    new THREE.Mesh(
+        attractorRingGeometry,
+        attractorRingMaterial
+    );
+
+attractor.add(
+    attractorRing
+);
+
+
+/*
+ * ================================================================
+ * PANEL
+ * ================================================================
+ */
+
+const panel =
+    createLabPanel({
+
+        simulation,
+
+        onModeChange(mode) {
+
+            if (mode === 'lab') {
+
+                /*
+                 * El escenario por defecto del laboratorio
+                 * comienza en atracción radial.
+                 */
+                simulation.setScenario(3);
+
+            }
+
+        },
+
+        onScenarioChange(scenario) {
+
+            /*
+             * El escenario ya se aplica desde el panel.
+             * Este callback queda disponible para extensiones.
+             */
+            console.log(
+                `Escenario de laboratorio: ${scenario}`
+            );
+
+        }
+
+    });
+
+
+/*
+ * ================================================================
+ * PUNTERO
+ * ================================================================
+ */
+
+const pointer =
+    new THREE.Vector2();
+
+const pointerWorld =
+    new THREE.Vector3();
+
+const raycaster =
+    new THREE.Raycaster();
+
+const interactionPlane =
+    new THREE.Plane(
+        new THREE.Vector3(
+            0,
+            0,
+            1
+        ),
+        0
+    );
+
+
+let pointerInside =
+    false;
+
+
+/*
+ * Actualiza las coordenadas del mouse.
+ */
+function updatePointer(event) {
+
+    pointer.x =
+        (event.clientX /
+            window.innerWidth) *
+            2 -
+        1;
+
+    pointer.y =
+        -(
+            event.clientY /
+            window.innerHeight
+        ) *
+            2 +
+        1;
+
+    raycaster.setFromCamera(
+        pointer,
+        camera
+    );
+
+    const hit =
+        raycaster.ray.intersectPlane(
+            interactionPlane,
+            pointerWorld
+        );
+
+    if (!hit) return;
+
+
+    /*
+     * El atractor está limitado al campo visible.
+     */
+    pointerWorld.x =
+        THREE.MathUtils.clamp(
+            pointerWorld.x,
+            -WORLD_WIDTH / 2,
+            WORLD_WIDTH / 2
+        );
+
+    pointerWorld.y =
+        THREE.MathUtils.clamp(
+            pointerWorld.y,
+            -WORLD_HEIGHT / 2,
+            WORLD_HEIGHT / 2
+        );
+
+
+    /*
+     * Actualización del uniform GPU.
+     */
+    simulation.setAttractor(
+        pointerWorld.x,
+        pointerWorld.y,
+        0
+    );
+
+
+    /*
+     * Actualización del marcador visual.
+     */
+    attractor.position.set(
+        pointerWorld.x,
+        pointerWorld.y,
+        0
+    );
+
+
+    /*
+     * Información del panel.
+     */
+    panel.setPointerPosition(
+        pointerWorld.x,
+        pointerWorld.y
+    );
+}
+
+
+window.addEventListener(
+    'pointermove',
+    event => {
+
+        pointerInside = true;
+
+        updatePointer(
+            event
+        );
+
+    },
+    {
+        passive: true
+    }
+);
+
+
+window.addEventListener(
+    'pointerleave',
+    () => {
+
+        pointerInside = false;
+
+    }
+);
+
+
+/*
+ * ================================================================
+ * RESIZE
+ * ================================================================
+ */
+
+window.addEventListener(
+    'resize',
+    () => {
+
+        const newAspect =
+            window.innerWidth /
+            window.innerHeight;
+
+        const newCameraWidth =
+            WORLD_HEIGHT *
+            newAspect;
+
+        camera.left =
+            -newCameraWidth / 2;
+
+        camera.right =
+            newCameraWidth / 2;
+
+        camera.top =
+            WORLD_HEIGHT / 2;
+
+        camera.bottom =
+            -WORLD_HEIGHT / 2;
+
+        camera.updateProjectionMatrix();
+
+
+        renderer.setSize(
+            window.innerWidth,
+            window.innerHeight
+        );
+
+        renderer.setPixelRatio(
+            Math.min(
+                window.devicePixelRatio,
+                2
+            )
+        );
+
+    }
+);
+
+
+/*
+ * ================================================================
+ * RELOJ DE SIMULACIÓN
+ * ================================================================
+ */
+
+const clock =
+    new THREE.Clock();
+
+let simulationTime =
+    0;
+
+
+/*
+ * ================================================================
+ * ANIMACIÓN
+ * ================================================================
+ */
+
+function animate() {
+
+    const elapsed =
+        clock.getDelta();
+
+
+    /*
+     * Evitamos que una pestaña congelada genere un salto
+     * gigantesco de integración.
+     */
+    const frameDelta =
+        Math.min(
+            elapsed,
+            0.05
+        );
+
+
+    /*
+     * Tiempo acumulado de simulación.
+     */
+    simulationTime +=
+        frameDelta;
+
+
+    /*
+     * Actualizamos uniform de tiempo.
+     */
+    simulation.updateTime(
+        simulationTime
+    );
+
+
+    /*
+     * ------------------------------------------------------------
+     * COMPUTE GPU
+     * ------------------------------------------------------------
+     *
+     * El kernel procesa:
+     *
+     * N partículas
+     *
+     * de forma paralela en GPU.
+     */
+    renderer.computeAsync(
+        simulation.compute
+    );
+
+
+    /*
+     * ------------------------------------------------------------
+     * Atractor
+     * ------------------------------------------------------------
+     *
+     * Animación visual muy sutil.
+     */
+    const pulse =
+        1.0 +
+        Math.sin(
+            simulationTime * 3.0
+        ) * 0.08;
+
+    attractorRing.scale.set(
+        pulse,
+        pulse,
+        1
+    );
+
+
+    /*
+     * ------------------------------------------------------------
+     * RENDER
+     * ------------------------------------------------------------
+     */
+
+    renderer.render(
+        scene,
+        camera
+    );
+}
+
+
+/*
+ * ================================================================
+ * DEBUG / INFORMACIÓN
+ * ================================================================
+ */
+
+console.info(
+    'Unidad 3 - Instrumento de Fuerzas'
+);
+
+console.info(
+    `Partículas: ${PARTICLE_COUNT.toLocaleString()}`
+);
+
+console.info(
+    'Integrador: Euler semiimplícito'
+);
+
+console.info(
+    'Backend: WebGPU + TSL Compute'
+);
+
+console.info(
+    'Fuerzas: drag + radial + vortex + curl noise'
+);
