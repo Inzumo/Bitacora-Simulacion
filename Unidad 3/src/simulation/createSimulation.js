@@ -41,6 +41,11 @@ export function createSimulation({
     // UNIFORMS
     // ============================================================
 
+    const particleSize =
+        uniform(
+            params.particleSize.value
+        );
+
     const currentCenter =
         uniform(
             params.currentCenter.value
@@ -479,7 +484,7 @@ export function createSimulation({
         positionBuffer.toAttribute();
 
     particleMaterial.scaleNode =
-        params.particleSize.value;
+        particleSize;
 
     particleMaterial.colorNode =
         uniform(
@@ -507,6 +512,9 @@ export function createSimulation({
     // ============================================================
 
     function updateUniforms() {
+
+        particleSize.value =
+            params.particleSize.value;
 
         currentCenter.value.copy(
             params.currentCenter.value
@@ -607,6 +615,7 @@ export function createSimulation({
         resetCompute,
         particles,
         uniforms: {
+            particleSize,
             currentCenter,
             currentDirection,
             currentStrength,
