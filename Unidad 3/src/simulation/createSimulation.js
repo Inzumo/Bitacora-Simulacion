@@ -1,5 +1,5 @@
 import * as THREE from 'three/webgpu';
-import { Fn, instancedArray, float, vec3, vec4, uniform } from 'three/tsl';
+import { Fn, instancedArray, float, vec3, vec4, uniform, instanceIndex } from 'three/tsl';
 
 export function createSimulation({ renderer, scene, params, count }) {
   // Buffers en VRAM
@@ -12,8 +12,9 @@ export function createSimulation({ renderer, scene, params, count }) {
   const uAttractor = uniform(new THREE.Vector3(...params.attractor));
 
   // Compute Shader de Inicialización / Reset
-  const initParticles = Fn(({ storageProcess }) => {
-    const index = storageProcess.globalInvocationID.x;
+  const initParticles = Fn(() => {
+    // Usamos instanceIndex directamente en lugar de storageProcess.globalInvocationID.x
+    const index = instanceIndex;
 
     const phi = float(index).mul(0.1);
     const radius = float(index).mod(2.0);
@@ -29,8 +30,8 @@ export function createSimulation({ renderer, scene, params, count }) {
   const computeInit = initParticles().compute(count);
 
   // Compute Shader de Física
-  const updateParticles = Fn(({ storageProcess }) => {
-    const index = storageProcess.globalInvocationID.x;
+  const updateParticles = Fn(() => {
+    const index = instanceIndex;
 
     const pos = positionBuffer.element(index).xyz;
     const vel = velocityBuffer.element(index).xyz;
@@ -68,7 +69,6 @@ export function createSimulation({ renderer, scene, params, count }) {
   return {
     computeSimulation,
     stepSimulation: () => {
-      // Actualizar valores de uniforms antes de despachar el compute
       uDamping.value = params.damping;
       uRadialStrength.value = params.radialStrength;
       if (params.attractor.isVector3) {
