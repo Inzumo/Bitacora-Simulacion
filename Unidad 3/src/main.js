@@ -6,7 +6,7 @@ import { createParameters, updateParametersSmoothly, presets } from './simulatio
 import { createSimulation } from './simulation/createSimulation.js';
 import { createLabPanel } from './ui/labPanel.js';
 
-const PARTICLE_COUNT = 131072; // 2^17
+const PARTICLE_COUNT = 131072;
 
 async function main() {
   const mount = document.querySelector('#app');
@@ -16,7 +16,6 @@ async function main() {
     throw new Error('Este proyecto requiere WebGPU para ejecutar compute shaders.');
   }
 
-  // SCENE, CAMERA, RENDERER
   const scene = new THREE.Scene();
   scene.background = new THREE.Color('#050607');
 
@@ -37,7 +36,6 @@ async function main() {
   const params = createParameters();
   const simulation = createSimulation({ renderer, scene, params, count: PARTICLE_COUNT });
 
-  // HELPERS
   const attractorHelper = new THREE.Mesh(
     new THREE.SphereGeometry(0.12, 16, 12),
     new THREE.MeshBasicMaterial({ color: '#ffffff' })
@@ -47,7 +45,6 @@ async function main() {
   const axes = new THREE.AxesHelper(1.5);
   scene.add(axes);
 
-  // POINTER INTERACTION
   const pointerNdc = new THREE.Vector2();
   const raycaster = new THREE.Raycaster();
   const interactionPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
@@ -59,12 +56,10 @@ async function main() {
     raycaster.setFromCamera(pointerNdc, camera);
 
     if (raycaster.ray.intersectPlane(interactionPlane, hit)) {
-      if (params.currentCenter) {
-        if (params.currentCenter.copy) params.currentCenter.copy(hit);
-        else params.currentCenter = [hit.x, hit.y, hit.z];
-      } else if (params.attractor) {
-        if (params.attractor.copy) params.attractor.copy(hit);
-        else params.attractor = [hit.x, hit.y, hit.z];
+      if (Array.isArray(params.attractor)) {
+        params.attractor[0] = hit.x;
+        params.attractor[1] = hit.y;
+        params.attractor[2] = hit.z;
       }
       attractorHelper.position.copy(hit);
     }
@@ -73,8 +68,6 @@ async function main() {
   let paused = false;
   let mode = 'LAB';
   let panel;
-  let savedRadialStrength = params.radialStrength;
-  let savedRadialEnabled = params.radialEnabled;
 
   const applyPreset = (id) => {
     if (id === 'inertia' || id === 'preset1') presets.preset1(params);
@@ -112,7 +105,6 @@ async function main() {
   document.body.append(hud);
   setMode('LAB');
 
-  // KEYBOARD EVENTS
   window.addEventListener('keydown', (event) => {
     if (event.repeat) return;
     if (event.code === 'KeyP') setMode(mode === 'LAB' ? 'PERFORMANCE' : 'LAB');
@@ -122,21 +114,6 @@ async function main() {
     if (event.code === 'Digit3') applyPreset('preset3');
     if (event.code === 'Digit4') applyPreset('preset4');
     if (event.code === 'Digit5') applyPreset('preset5');
-
-    if (event.code === 'Space') {
-      event.preventDefault();
-      savedRadialStrength = params.radialStrength;
-      savedRadialEnabled = params.radialEnabled;
-      params.radialEnabled = 1;
-      params.radialStrength = -(savedRadialStrength || 2.0);
-    }
-  });
-
-  window.addEventListener('keyup', (event) => {
-    if (event.code === 'Space') {
-      params.radialEnabled = savedRadialEnabled;
-      params.radialStrength = savedRadialStrength;
-    }
   });
 
   window.addEventListener('resize', () => {
@@ -147,7 +124,6 @@ async function main() {
 
   simulation.reset();
 
-  // FRAME LOOP
   renderer.setAnimationLoop(() => {
     updateParametersSmoothly(params, 0.05);
 
