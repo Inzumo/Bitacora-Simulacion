@@ -41,7 +41,7 @@ async function main() {
   renderer.setSize(window.innerWidth, window.innerHeight);
   mount.appendChild(renderer.domElement);
 
-  // Inicialización asíncrona segura del Renderer
+  // Inicialización asíncrona obligatoria del WebGPURenderer
   try {
     await renderer.init();
   } catch (err) {
@@ -99,7 +99,6 @@ async function main() {
     else if (id === 'repel' || id === 'preset4') presets.preset4(params);
     else if (id === 'vortex' || id === 'preset5') presets.preset5(params);
 
-    // NOTA: Se eliminó simulation.reset() para permitir transiciones suaves sin parones.
     panel?.refresh();
   };
 
@@ -163,14 +162,30 @@ async function main() {
 
   simulation.reset();
 
-  // FRAME LOOP ------------------------------------------------------------
-  renderer.setAnimationLoop(() => {
+  // FRAME LOOP (WebGPU Async Render Loop) --------------------------------
+  let isComputing = false;
+
+  renderer.setAnimationLoop(async () => {
     // Interpola suavemente todos los parámetros hacia los objetivos deseados
     updateParametersSmoothly(params, 0.05);
 
-    if (!paused) simulation.stepSimulation();
+    if (!paused && !isComputing) {
+      isComputing = true;
+      
+      // 1. Despacha el Compute Shader a través de la función/nodo de simulación
+      if (simulation.computeNode) {
+        await renderer.computeAsync(simulation.computeNode);
+      } else {
+        simulation.stepSimulation();
+      }
+
+      isComputing = false;
+    }
+
     orbit.update();
-    renderer.render(scene, camera);
+    
+    // 2. Renderiza la escena gráfica
+    await renderer.renderAsync(scene, camera);
   });
 }
 
