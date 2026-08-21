@@ -183,7 +183,7 @@ export function createSimulation({
     })().compute(count);
 
     // ============================================================
-    // MATERIAL Y PUNTOS EN LUGAR DE SPRITES
+    // MATERIAL Y GEOMETRÍA DE PUNTOS
     // ============================================================
 
     const particleMaterial = new THREE.PointsNodeMaterial({
@@ -196,12 +196,11 @@ export function createSimulation({
     particleMaterial.sizeNode = particleSize;
     particleMaterial.colorNode = uniform(new THREE.Color('#38bdf8'));
 
-    const particles = new THREE.Points(
-        new THREE.BufferGeometry(),
-        particleMaterial
-    );
+    // Asignación explícita del tamaño de buffer a la geometría
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(count * 3), 3));
 
-    particles.geometry.setDrawRange(0, count);
+    const particles = new THREE.Points(geometry, particleMaterial);
     scene.add(particles);
 
     // ============================================================
