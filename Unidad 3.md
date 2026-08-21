@@ -20,6 +20,16 @@ $$
 \vec{F}_{\text{drag}}
 $$
 
+Cada fuerza cumple una función diferente dentro del comportamiento. La fuerza radial controla principalmente si las partículas se acercan o se alejan, el vórtice genera el movimiento de rotación, el viento permite agregar una fuerza externa y el drag ayuda a controlar la velocidad para que el sistema no se vuelva demasiado inestable.
+
+También decidí que la simulación tuviera 30.000 partículas. Al principio mi preocupación era que una cantidad tan grande de partículas pudiera afectar demasiado el rendimiento, especialmente porque quería que la interacción fuera en tiempo real. Por eso terminé llevando el cálculo físico al Compute Shader de WebGPU, utilizando los Storage Buffers para guardar las posiciones y velocidades.
+
+La parte visual también fue importante. Utilicé THREE.PointsNodeMaterial y AdditiveBlending porque quería que las partículas se sintieran más como una masa luminosa que como puntos individuales. De esta forma, cuando muchas partículas se juntan, visualmente se forma un núcleo, y cuando se separan se puede ver mucho mejor la expansión.
+
+Finalmente dividí la experiencia en dos modos. El Modo LAB lo utilicé para probar y ajustar las fuerzas con sliders y presets, mientras que el Modo PERFORMANCE lo dejé más limpio para poder controlar la simulación directamente con el mouse, la Barra Espaciadora y las teclas P y R.
+
+La intención final no era solamente hacer una simulación de partículas que se viera bien, sino convertirla en una especie de instrumento visual, donde yo pudiera controlar la tensión del sistema mientras escucho la música y decidir en qué momento mantener las partículas juntas y en qué momento hacer que todo explote.
+
 ## Tabla de Criterios
 
 | Criterio | Peso | Valoración | Qué debe demostrar la evidencia  |
