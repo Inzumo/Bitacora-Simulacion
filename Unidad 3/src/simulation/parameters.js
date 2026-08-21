@@ -1,119 +1,65 @@
 import * as THREE from 'three/webgpu';
+import { Fn, instancedArray, float, vec4, uniform } from 'three/tsl';
 
-export function createParameters() {
-  const params = {
-    initialSpeed: { value: 0.5 },
-    maxSpeed: { value: 10.0 },
-    timeStep: { value: 0.016 },
-    bounds: { value: new THREE.Vector3(5.0, 5.0, 5.0) },
-    particleSize: { value: 0.08 },
+export function createSimulation({ renderer, scene, params, count }) {
+  const positionBuffer = instancedArray(count, 'vec4');
+  const velocityBuffer = instancedArray(count, 'vec4');
 
-    // Corriente Local
-    currentCenter: { value: new THREE.Vector3(0, 0, 0) },
-    currentDirection: { value: new THREE.Vector3(1, 0, 0) },
-    currentStrength: { value: 2.0 },
-    currentRadius: { value: 2.0 },
-    currentEnabled: { value: 1.0 },
+  // Init / Reset Compute Node
+  const initParticles = Fn(({ storageProcess }) => {
+    const index = storageProcess.globalInvocationID.x;
 
-    // Viento Constante
-    wind: { value: new THREE.Vector3(0, 0, 0) },
-    windEnabled: { value: 0.0 },
+    const phi = float(index).mul(0.1);
+    const radius = float(index).mod(2.0);
 
-    // Atracción / Repulsión Radial
-    radialStrength: { value: 2.0 },
-    radialEnabled: { value: 1.0 },
-    radialSoftness: { value: 0.5 },
+    const posX = radius.mul(phi.cos());
+    const posY = radius.mul(phi.sin());
+    const posZ = float(index).mod(1.0).sub(0.5);
 
-    // Vórtice
-    vortexStrength: { value: 2.0 },
-    vortexEnabled: { value: 0.0 },
-    vortexSoftness: { value: 0.5 },
+    positionBuffer.element(index).assign(vec4(posX, posY, posZ, 1.0));
+    velocityBuffer.element(index).assign(vec4(0.0, 0.0, 0.0, 0.0));
+  });
 
-    // Fricción (Drag)
-    dragCoefficient: { value: 0.05 },
-    dragEnabled: { value: 1.0 },
+  const computeInit = initParticles().compute(count);
 
-    // Curl Noise
-    curlEnabled: { value: 0.0 },
-    curlStrength: { value: 1.0 },
-    noiseScale: { value: 0.5 },
-    noiseSpeed: { value: 0.1 },
+  // Frame Physics Compute Node
+  const updateParticles = Fn(({ storageProcess }) => {
+    const index = storageProcess.globalInvocationID.x;
 
-    // Estado objetivo para transiciones suaves (targets)
-    targets: {}
+    const pos = positionBuffer.element(index).xyz;
+    const vel = velocityBuffer.element(index).xyz;
+
+    const newPos = pos.add(vel.mul(0.016));
+
+    positionBuffer.element(index).assign(vec4(newPos, 1.0));
+    velocityBuffer.element(index).assign(vec4(vel, 0.0));
+  });
+
+  const computeSimulation = updateParticles().compute(count);
+
+  // Mesh setup
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(count * 3), 3));
+  geometry.drawRange.count = count;
+
+  const material = new THREE.PointsNodeMaterial({
+    size: 3.0,
+    sizeAttenuation: true,
+  });
+
+  material.positionNode = positionBuffer.toAttribute();
+  material.colorNode = vec4(0.2, 0.6, 1.0, 1.0);
+
+  const points = new THREE.Points(geometry, material);
+  scene.add(points);
+
+  return {
+    computeSimulation,
+    stepSimulation: () => {
+      renderer.compute(computeSimulation);
+    },
+    reset: () => {
+      renderer.compute(computeInit);
+    }
   };
-
-  // Inicializar metas con copias independientes de los valores base
-  for (const key in params) {
-    if (key === 'targets') continue;
-    const val = params[key].value;
-    if (val instanceof THREE.Vector3) {
-      params.targets[key] = val.clone();
-    } else {
-      params.targets[key] = val;
-    }
-  }
-
-  return params;
 }
-
-// Función de suavizado continuo que debes invocar en el bucle principal (animate)
-export function updateParametersSmoothly(params, lerpFactor = 0.05) {
-  for (const key in params.targets) {
-    const targetVal = params.targets[key];
-    const currentUniform = params[key];
-
-    if (currentUniform && currentUniform.value !== undefined) {
-      if (currentUniform.value instanceof THREE.Vector3) {
-        currentUniform.value.lerp(targetVal, lerpFactor);
-      } else if (typeof currentUniform.value === 'number') {
-        currentUniform.value += (targetVal - currentUniform.value) * lerpFactor;
-      }
-    }
-  }
-}
-
-// Mapa de los 5 Presets (actualizan exclusivamente los valores dentro de 'targets')
-export const presets = {
-  preset1: (params) => { // Inercia / Estado Base
-    params.targets.radialEnabled = 0.0;
-    params.targets.vortexEnabled = 0.0;
-    params.targets.windEnabled = 0.0;
-    params.targets.currentEnabled = 0.0;
-    params.targets.dragEnabled = 1.0;
-    params.targets.dragCoefficient = 0.08;
-  },
-  preset2: (params) => { // Viento / Flujo Direccional
-    params.targets.radialEnabled = 0.0;
-    params.targets.vortexEnabled = 0.0;
-    params.targets.currentEnabled = 1.0;
-    params.targets.currentStrength = 5.0;
-    params.targets.windEnabled = 1.0;
-    params.targets.wind.set(3.0, 0.0, 0.0);
-    params.targets.dragCoefficient = 0.02;
-  },
-  preset3: (params) => { // Atracción Radial / Tensión
-    params.targets.radialEnabled = 1.0;
-    params.targets.radialStrength = 8.0;
-    params.targets.vortexEnabled = 0.0;
-    params.targets.windEnabled = 0.0;
-    params.targets.currentEnabled = 0.0;
-    params.targets.dragCoefficient = 0.04;
-  },
-  preset4: (params) => { // Repulsión / Impacto
-    params.targets.radialEnabled = 1.0;
-    params.targets.radialStrength = -15.0; // Valor negativo genera repulsión
-    params.targets.vortexEnabled = 0.0;
-    params.targets.windEnabled = 0.0;
-    params.targets.currentEnabled = 0.0;
-    params.targets.dragCoefficient = 0.01;
-  },
-  preset5: (params) => { // Vórtice / Caos Orgánico
-    params.targets.radialEnabled = 0.0;
-    params.targets.vortexEnabled = 1.0;
-    params.targets.vortexStrength = 12.0;
-    params.targets.curlEnabled = 1.0;
-    params.targets.curlStrength = 2.0;
-    params.targets.dragCoefficient = 0.03;
-  }
-};
