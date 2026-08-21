@@ -2,7 +2,7 @@ import * as THREE from 'three/webgpu';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import WebGPU from 'three/addons/capabilities/WebGPU.js';
 
-import { createParameters } from './simulation/parameters.js';
+import { createParameters, updateParametersSmoothly, presets } from './simulation/parameters.js';
 import { createSimulation } from './simulation/createSimulation.js';
 import { createLabPanel } from './ui/labPanel.js';
 
@@ -77,11 +77,10 @@ async function main() {
     raycaster.setFromCamera(pointerNdc, camera);
 
     if (raycaster.ray.intersectPlane(interactionPlane, hit)) {
-      // Compatibilidad: mapea hacia currentCenter o attractor según exista en tu objeto params
       if (params.currentCenter) {
-        params.currentCenter.value.copy(hit);
+        params.targets.currentCenter.copy(hit);
       } else if (params.attractor) {
-        params.attractor.value.copy(hit);
+        params.targets.attractor.copy(hit);
       }
       attractorHelper.position.copy(hit);
     }
@@ -90,37 +89,17 @@ async function main() {
   let paused = false;
   let mode = 'LAB';
   let panel;
-  let savedRadialStrength = params.radialStrength.value;
-  let savedRadialEnabled = params.radialEnabled.value;
+  let savedRadialStrength = params.targets.radialStrength;
+  let savedRadialEnabled = params.targets.radialEnabled;
 
   const applyPreset = (id) => {
-    params.windEnabled.value = 0;
-    params.radialEnabled.value = 0;
-    params.vortexEnabled.value = 0;
-    params.dragEnabled.value = 0;
-    params.wind.value.set(0, 0, 0);
-    params.initialSpeed.value = 0;
+    if (id === 'inertia' || id === 'preset1') presets.preset1(params);
+    else if (id === 'wind' || id === 'preset2') presets.preset2(params);
+    else if (id === 'attract' || id === 'preset3') presets.preset3(params);
+    else if (id === 'repel' || id === 'preset4') presets.preset4(params);
+    else if (id === 'vortex' || id === 'preset5') presets.preset5(params);
 
-    if (id === 'inertia') {
-      params.initialSpeed.value = 0.8;
-    } else if (id === 'wind') {
-      params.windEnabled.value = 1;
-      params.wind.value.set(1.5, 0, 0);
-    } else if (id === 'attract') {
-      params.radialEnabled.value = 1;
-      params.radialStrength.value = 3.0;
-    } else if (id === 'repel') {
-      params.radialEnabled.value = 1;
-      params.radialStrength.value = -3.0;
-    } else if (id === 'vortex') {
-      params.radialEnabled.value = 1;
-      params.radialStrength.value = 1.0;
-      params.vortexEnabled.value = 1;
-      params.vortexStrength.value = 3.0;
-      params.dragEnabled.value = 1;
-      params.dragCoefficient.value = 0.08;
-    }
-    simulation.reset();
+    // NOTA: Se eliminó simulation.reset() para permitir transiciones suaves sin parones.
     panel?.refresh();
   };
 
@@ -154,25 +133,25 @@ async function main() {
     if (event.repeat) return;
     if (event.code === 'KeyP') setMode(mode === 'LAB' ? 'PERFORMANCE' : 'LAB');
     if (event.code === 'KeyR') simulation.reset();
-    if (event.code === 'Digit1') applyPreset('inertia');
-    if (event.code === 'Digit2') applyPreset('wind');
-    if (event.code === 'Digit3') applyPreset('attract');
-    if (event.code === 'Digit4') applyPreset('repel');
-    if (event.code === 'Digit5') applyPreset('vortex');
+    if (event.code === 'Digit1') applyPreset('preset1');
+    if (event.code === 'Digit2') applyPreset('preset2');
+    if (event.code === 'Digit3') applyPreset('preset3');
+    if (event.code === 'Digit4') applyPreset('preset4');
+    if (event.code === 'Digit5') applyPreset('preset5');
 
     if (event.code === 'Space') {
       event.preventDefault();
-      savedRadialStrength = params.radialStrength.value;
-      savedRadialEnabled = params.radialEnabled.value;
-      params.radialEnabled.value = 1;
-      params.radialStrength.value = -(savedRadialStrength || 2.0);
+      savedRadialStrength = params.targets.radialStrength;
+      savedRadialEnabled = params.targets.radialEnabled;
+      params.targets.radialEnabled = 1;
+      params.targets.radialStrength = -(savedRadialStrength || 2.0);
     }
   });
 
   window.addEventListener('keyup', (event) => {
     if (event.code === 'Space') {
-      params.radialEnabled.value = savedRadialEnabled;
-      params.radialStrength.value = savedRadialStrength;
+      params.targets.radialEnabled = savedRadialEnabled;
+      params.targets.radialStrength = savedRadialStrength;
     }
   });
 
@@ -186,6 +165,9 @@ async function main() {
 
   // FRAME LOOP ------------------------------------------------------------
   renderer.setAnimationLoop(() => {
+    // Interpola suavemente todos los parámetros hacia los objetivos deseados
+    updateParametersSmoothly(params, 0.05);
+
     if (!paused) simulation.stepSimulation();
     orbit.update();
     renderer.render(scene, camera);
