@@ -21,11 +21,17 @@ export function createSimulation({
     count
 }) {
 
+    // ============================================================
     // BUFFERS GPU
+    // ============================================================
+
     const positionBuffer = instancedArray(count, 'vec3');
     const velocityBuffer = instancedArray(count, 'vec3');
 
+    // ============================================================
     // UNIFORMS
+    // ============================================================
+
     const particleSize = uniform(params.particleSize.value);
     const currentCenter = uniform(params.currentCenter.value);
     const currentDirection = uniform(params.currentDirection.value);
@@ -50,7 +56,10 @@ export function createSimulation({
     const maxSpeed = uniform(params.maxSpeed.value);
     const bounds = uniform(params.bounds.value);
 
+    // ============================================================
     // RESET COMPUTE
+    // ============================================================
+
     const resetCompute = Fn(() => {
         const index = float(instanceIndex);
 
@@ -73,7 +82,10 @@ export function createSimulation({
         velocityBuffer.element(instanceIndex).assign(initialVelocity);
     })().compute(count);
 
+    // ============================================================
     // SIMULATION COMPUTE
+    // ============================================================
+
     const computeSimulation = Fn(() => {
         const position = positionBuffer.element(instanceIndex);
         const velocity = velocityBuffer.element(instanceIndex);
@@ -170,20 +182,31 @@ export function createSimulation({
         });
     })().compute(count);
 
-    // MATERIAL DE PARTÍCULAS
-    const particleMaterial = new THREE.SpriteNodeMaterial({
+    // ============================================================
+    // MATERIAL Y PUNTOS EN LUGAR DE SPRITES
+    // ============================================================
+
+    const particleMaterial = new THREE.PointsNodeMaterial({
         transparent: true,
-        depthWrite: false
+        depthWrite: false,
+        blending: THREE.AdditiveBlending
     });
 
     particleMaterial.positionNode = positionBuffer.toAttribute();
-    particleMaterial.scaleNode = particleSize;
-    particleMaterial.colorNode = uniform(new THREE.Color('#d7f4ff'));
+    particleMaterial.sizeNode = particleSize;
+    particleMaterial.colorNode = uniform(new THREE.Color('#38bdf8'));
 
-    // SPRITE INSTANCIADO
-    const particles = new THREE.Sprite(particleMaterial);
-    particles.count = count;
+    const particles = new THREE.Points(
+        new THREE.BufferGeometry(),
+        particleMaterial
+    );
+
+    particles.geometry.setDrawRange(0, count);
     scene.add(particles);
+
+    // ============================================================
+    // ACTUALIZAR UNIFORMS Y EJECUCIÓN
+    // ============================================================
 
     function updateUniforms() {
         particleSize.value = params.particleSize.value;
@@ -213,12 +236,12 @@ export function createSimulation({
 
     function reset() {
         updateUniforms();
-        renderer.computeAsync(resetCompute);
+        return renderer.computeAsync(resetCompute);
     }
 
     function stepSimulation() {
         updateUniforms();
-        renderer.compute(computeSimulation);
+        return renderer.computeAsync(computeSimulation);
     }
 
     return {
