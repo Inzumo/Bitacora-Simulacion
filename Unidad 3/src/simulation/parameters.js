@@ -1,168 +1,42 @@
 import * as THREE from 'three/webgpu';
 
 export function createParameters() {
+  return {
+    initialSpeed: { value: 0.5 },
+    maxSpeed: { value: 10.0 },
+    timeStep: { value: 0.016 },
+    bounds: { value: new THREE.Vector3(5.0, 5.0, 5.0) },
+    particleSize: { value: 0.08 },
 
-    return {
+    // Corriente Local
+    currentCenter: { value: new THREE.Vector3(0, 0, 0) },
+    currentDirection: { value: new THREE.Vector3(1, 0, 0) },
+    currentStrength: { value: 2.0 },
+    currentRadius: { value: 2.0 },
+    currentEnabled: { value: 1.0 },
 
-        // =========================================================
-        // ESTADO GENERAL
-        // =========================================================
+    // Viento Constante
+    wind: { value: new THREE.Vector3(0, 0, 0) },
+    windEnabled: { value: 0.0 },
 
-        time: 0,
+    // Atracción / Repulsión Radial
+    radialStrength: { value: 2.0 },
+    radialEnabled: { value: 1.0 },
+    radialSoftness: { value: 0.5 },
 
-        // =========================================================
-        // CENTRO DE INTERACCIÓN
-        //
-        // En nuestro instrumento NO es un atractor.
-        // Es el centro de la corriente.
-        // =========================================================
+    // Vórtice
+    vortexStrength: { value: 2.0 },
+    vortexEnabled: { value: 0.0 },
+    vortexSoftness: { value: 0.5 },
 
-        currentCenter: {
-            value: new THREE.Vector3(0, 0, 0)
-        },
+    // Ficción (Drag)
+    dragCoefficient: { value: 0.05 },
+    dragEnabled: { value: 1.0 },
 
-        currentDirection: {
-            value: new THREE.Vector3(0, 0, 0)
-        },
-
-        // =========================================================
-        // CORRIENTE — PERFORMANCE
-        // =========================================================
-
-        currentEnabled: {
-            value: 1
-        },
-
-        currentStrength: {
-            value: 3.0
-        },
-
-        currentRadius: {
-            value: 2.5
-        },
-
-        // =========================================================
-        // DRAG
-        // =========================================================
-
-        dragEnabled: {
-            value: 1
-        },
-
-        dragCoefficient: {
-            value: 0.12
-        },
-
-        // =========================================================
-        // ATRACCIÓN / REPULSIÓN
-        //
-        // Se mantiene para el LAB.
-        // =========================================================
-
-        radialEnabled: {
-            value: 0
-        },
-
-        radialStrength: {
-            value: 3.0
-        },
-
-        radialSoftness: {
-            value: 0.35
-        },
-
-        // =========================================================
-        // VÓRTICE
-        //
-        // Se mantiene para el LAB.
-        // =========================================================
-
-        vortexEnabled: {
-            value: 0
-        },
-
-        vortexStrength: {
-            value: 3.0
-        },
-
-        vortexSoftness: {
-            value: 0.35
-        },
-
-        // =========================================================
-        // VIENTO
-        //
-        // Se mantiene para el LAB.
-        // =========================================================
-
-        windEnabled: {
-            value: 0
-        },
-
-        wind: {
-            value: new THREE.Vector3(0, 0, 0)
-        },
-
-        // =========================================================
-        // CURL NOISE
-        // =========================================================
-
-        curlEnabled: {
-            value: 1
-        },
-
-        curlStrength: {
-            value: 0.35
-        },
-
-        noiseScale: {
-            value: 0.65
-        },
-
-        noiseSpeed: {
-            value: 0.15
-        },
-
-        // =========================================================
-        // INTEGRACIÓN
-        // =========================================================
-
-        timeStep: {
-            value: 0.016
-        },
-
-        // =========================================================
-        // VELOCIDAD INICIAL — LAB
-        // =========================================================
-
-        initialSpeed: {
-            value: 0
-        },
-
-        // =========================================================
-        // LÍMITES DEL ESPACIO
-        // =========================================================
-
-        bounds: {
-            value: new THREE.Vector3(5.0, 3.2, 2.5)
-        },
-
-        // =========================================================
-        // VELOCIDAD MÁXIMA
-        // =========================================================
-
-        maxSpeed: {
-            value: 4.5
-        },
-
-        // =========================================================
-        // TAMAÑO VISUAL
-        // =========================================================
-
-        particleSize: {
-            value: new THREE.Vector2(0.045, 0.045)
-        }
-
-    };
-
+    // Curl Noise
+    curlEnabled: { value: 0.0 },
+    curlStrength: { value: 1.0 },
+    noiseScale: { value: 0.5 },
+    noiseSpeed: { value: 0.1 }
+  };
 }

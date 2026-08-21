@@ -5,10 +5,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "type": "editor-browser",
+            "type": "chrome",
             "request": "launch",
             "name": "Launch Integrated Browser against localhost",
-            "url": "http://localhost:8080",
+            "url": "http://localhost:5173/",
             "webRoot": "${workspaceFolder}"
         }
     ]

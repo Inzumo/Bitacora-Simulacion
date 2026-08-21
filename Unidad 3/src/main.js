@@ -1,821 +1,201 @@
 import * as THREE from 'three/webgpu';
-
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-
 import WebGPU from 'three/addons/capabilities/WebGPU.js';
 
 import { createParameters } from './simulation/parameters.js';
-
 import { createSimulation } from './simulation/createSimulation.js';
-
 import { createLabPanel } from './ui/labPanel.js';
 
+/*
+2^15: 32768
+2^16: 65536
+2^17: 131072
+2^18: 262144
+2^19: 524288
+2^20: 1048576
+2^21: 2097152
+2^22: 4194304
+2^23: 8388608
+2^24: 16777216
+*/
 
-// ================================================================
-// CONFIGURACIÓN
-// ================================================================
-//
-// Empieza con 5000.
-// Cuando compruebes que funciona:
-//
-// 5000
-// 20000
-// 65536
-// 131072
-//
-// ================================================================
-
-const PARTICLE_COUNT = 5000;
-
-
-// ================================================================
-// MAIN
-// ================================================================
+const PARTICLE_COUNT = 131072; // 2^17. Increase only after measuring performance.
 
 async function main() {
+  const mount = document.querySelector('#app');
 
-    const mount =
-        document.querySelector(
-            '#app'
-        );
+  if (!WebGPU.isAvailable()) {
+    mount.appendChild(WebGPU.getErrorMessage());
+    throw new Error('Este proyecto requiere WebGPU para ejecutar compute shaders.');
+  }
 
-    // ============================================================
-    // WEBGPU
-    // ============================================================
+  // THREE.JS MENTAL MODEL: scene + camera + renderer ---------------------
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color('#050607');
 
-    if (
-        !WebGPU.isAvailable()
-    ) {
+  const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.05, 100);
+  camera.position.set(0, 0, 11);
 
-        mount.appendChild(
-            WebGPU.getErrorMessage()
-        );
+  const renderer = new THREE.WebGPURenderer({ antialias: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  mount.appendChild(renderer.domElement);
 
-        throw new Error(
-            'Este proyecto requiere WebGPU.'
-        );
-
-    }
-
-    // ============================================================
-    // ESCENA
-    // ============================================================
-
-    const scene =
-        new THREE.Scene();
-
-    scene.background =
-        new THREE.Color(
-            '#050607'
-        );
-
-    // ============================================================
-    // CÁMARA
-    // ============================================================
-
-    const camera =
-        new THREE.PerspectiveCamera(
-            50,
-            innerWidth / innerHeight,
-            0.05,
-            100
-        );
-
-    camera.position.set(
-        0,
-        0,
-        11
-    );
-
-    // ============================================================
-    // RENDERER
-    // ============================================================
-
-    const renderer =
-        new THREE.WebGPURenderer({
-            antialias: true
-        });
-
-    renderer.setPixelRatio(
-        Math.min(
-            devicePixelRatio,
-            2
-        )
-    );
-
-    renderer.setSize(
-        innerWidth,
-        innerHeight
-    );
-
-    mount.appendChild(
-        renderer.domElement
-    );
-
+  // Inicialización asíncrona segura del Renderer
+  try {
     await renderer.init();
-
-    // ============================================================
-    // ORBIT CONTROLS
-    // ============================================================
-
-    const orbit =
-        new OrbitControls(
-            camera,
-            renderer.domElement
-        );
-
-    orbit.enableDamping = true;
-
-    orbit.target.set(
-        0,
-        0,
-        0
-    );
-
-    // ============================================================
-    // PARÁMETROS
-    // ============================================================
-
-    const params =
-        createParameters();
-
-    // ============================================================
-    // SIMULACIÓN
-    // ============================================================
-
-    const simulation =
-        createSimulation({
-
-            renderer,
-
-            scene,
-
-            params,
-
-            count:
-                PARTICLE_COUNT
-
-        });
-
-    // ============================================================
-    // AYUDAS VISUALES
-    // ============================================================
-
-    const currentHelper =
-        new THREE.Mesh(
-
-            new THREE.SphereGeometry(
-                0.10,
-                16,
-                12
-            ),
-
-            new THREE.MeshBasicMaterial({
-                color:
-                    '#ffffff'
-            })
-
-        );
-
-    scene.add(
-        currentHelper
-    );
-
-    const axes =
-        new THREE.AxesHelper(
-            1.5
-        );
-
-    scene.add(
-        axes
-    );
-
-    // ============================================================
-    // POINTER
-    // ============================================================
-
-    const pointerNdc =
-        new THREE.Vector2();
-
-    const raycaster =
-        new THREE.Raycaster();
-
-    const interactionPlane =
-        new THREE.Plane(
-            new THREE.Vector3(
-                0,
-                0,
-                1
-            ),
-            0
-        );
-
-    const currentWorld =
-        new THREE.Vector3();
-
-    const previousWorld =
-        new THREE.Vector3();
-
-    const gesture =
-        new THREE.Vector3();
-
-    let hasPreviousPoint =
-        false;
-
-    // ============================================================
-    // MOUSE → CORRIENTE
-    // ============================================================
-
-    addEventListener(
-        'pointermove',
-        (event) => {
-
-            pointerNdc.x =
-                (
-                    event.clientX /
-                    innerWidth
-                ) * 2 - 1;
-
-            pointerNdc.y =
-                -(
-                    event.clientY /
-                    innerHeight
-                ) * 2 + 1;
-
-            raycaster.setFromCamera(
-                pointerNdc,
-                camera
-            );
-
-            const hit =
-                raycaster.ray
-                    .intersectPlane(
-                        interactionPlane,
-                        currentWorld
-                    );
-
-            if (!hit) {
-                return;
-            }
-
-            // ----------------------------------------------------
-            // PRIMER MOVIMIENTO
-            // ----------------------------------------------------
-
-            if (
-                !hasPreviousPoint
-            ) {
-
-                previousWorld.copy(
-                    currentWorld
-                );
-
-                hasPreviousPoint =
-                    true;
-
-                gesture.set(
-                    0,
-                    0,
-                    0
-                );
-
-            } else {
-
-                // ------------------------------------------------
-                // DIRECCIÓN DEL GESTO
-                // ------------------------------------------------
-
-                gesture
-                    .copy(
-                        currentWorld
-                    )
-                    .sub(
-                        previousWorld
-                    );
-
-                // ------------------------------------------------
-                // LIMITAR VELOCIDAD
-                // ------------------------------------------------
-
-                const maxGesture =
-                    0.30;
-
-                if (
-                    gesture.length() >
-                    maxGesture
-                ) {
-
-                    gesture
-                        .normalize()
-                        .multiplyScalar(
-                            maxGesture
-                        );
-
-                }
-
-                previousWorld.copy(
-                    currentWorld
-                );
-
-            }
-
-            // ----------------------------------------------------
-            // CENTRO DE LA CORRIENTE
-            // ----------------------------------------------------
-
-            params.currentCenter.value.copy(
-                currentWorld
-            );
-
-            // ----------------------------------------------------
-            // DIRECCIÓN DE LA CORRIENTE
-            // ----------------------------------------------------
-
-            params.currentDirection.value.copy(
-                gesture
-            );
-
-            currentHelper.position.copy(
-                currentWorld
-            );
-
-        }
-    );
-
-    // ============================================================
-    // ESTADO
-    // ============================================================
-
-    let paused =
-        false;
-
-    let mode =
-        'LAB';
-
-    let panel;
-
-    // ============================================================
-    // HUD
-    // ============================================================
-
-    const hud =
-        document.createElement(
-            'div'
-        );
-
-    hud.className =
-        'hud';
-
-    document.body.append(
-        hud
-    );
-
-    // ============================================================
-    // PRESETS
-    // ============================================================
-
-    const applyPreset =
-        (id) => {
-
-            // ----------------------------------------------------
-            // APAGAR FUERZAS
-            // ----------------------------------------------------
-
-            params.currentEnabled.value =
-                0;
-
-            params.windEnabled.value =
-                0;
-
-            params.radialEnabled.value =
-                0;
-
-            params.vortexEnabled.value =
-                0;
-
-            params.curlEnabled.value =
-                0;
-
-            params.dragEnabled.value =
-                0;
-
-            params.wind.value.set(
-                0,
-                0,
-                0
-            );
-
-            params.initialSpeed.value =
-                0;
-
-            // ----------------------------------------------------
-            // INERCIA
-            // ----------------------------------------------------
-
-            if (
-                id === 'inertia'
-            ) {
-
-                params.initialSpeed.value =
-                    0.8;
-
-            }
-
-            // ----------------------------------------------------
-            // VIENTO
-            // ----------------------------------------------------
-
-            else if (
-                id === 'wind'
-            ) {
-
-                params.windEnabled.value =
-                    1;
-
-                params.wind.value.set(
-                    1.5,
-                    0,
-                    0
-                );
-
-            }
-
-            // ----------------------------------------------------
-            // ATRACCIÓN
-            // ----------------------------------------------------
-
-            else if (
-                id === 'attract'
-            ) {
-
-                params.radialEnabled.value =
-                    1;
-
-                params.radialStrength.value =
-                    3.0;
-
-            }
-
-            // ----------------------------------------------------
-            // REPULSIÓN
-            // ----------------------------------------------------
-
-            else if (
-                id === 'repel'
-            ) {
-
-                params.radialEnabled.value =
-                    1;
-
-                params.radialStrength.value =
-                    -3.0;
-
-            }
-
-            // ----------------------------------------------------
-            // VÓRTICE
-            // ----------------------------------------------------
-
-            else if (
-                id === 'vortex'
-            ) {
-
-                params.radialEnabled.value =
-                    1;
-
-                params.radialStrength.value =
-                    1.0;
-
-                params.vortexEnabled.value =
-                    1;
-
-                params.vortexStrength.value =
-                    3.0;
-
-                params.dragEnabled.value =
-                    1;
-
-                params.dragCoefficient.value =
-                    0.08;
-
-            }
-
-            // ----------------------------------------------------
-            // RESET
-            // ----------------------------------------------------
-
-            simulation.reset();
-
-            panel?.refresh();
-
-        };
-
-    // ============================================================
-    // MODO
-    // ============================================================
-
-    const setMode =
-        (next) => {
-
-            mode =
-                next;
-
-            const lab =
-                mode === 'LAB';
-
-            panel.setVisible(
-                lab
-            );
-
-            axes.visible =
-                lab;
-
-            currentHelper.visible =
-                lab;
-
-            orbit.enabled =
-                lab;
-
-            if (lab) {
-
-                hud.innerHTML =
-                    `
-                    <strong>LAB</strong>
-                    · P: PERFORMANCE
-                    · R: RESET
-                    · 1–5: pruebas
-                    `;
-
-            } else {
-
-                hud.innerHTML =
-                    `
-                    <strong>CORRIENTE</strong>
-                    · mueve el puntero
-                    · interpreta con el gesto
-                    `;
-
-            }
-
-        };
-
-    // ============================================================
-    // PANEL
-    // ============================================================
-
-    panel =
-        createLabPanel({
-
-            params,
-
-            onReset:
-                () => {
-
-                    simulation.reset();
-
-                },
-
-            onPreset:
-                applyPreset,
-
-            onModeChange:
-                () => {
-
-                    setMode(
-                        mode === 'LAB'
-                            ? 'PERFORMANCE'
-                            : 'LAB'
-                    );
-
-                },
-
-            onPauseChange:
-                () => {
-
-                    paused =
-                        !paused;
-
-                }
-
-        });
-
-    // ============================================================
-    // INICIAR EN LAB
-    // ============================================================
-
-    setMode(
-        'LAB'
-    );
-
-    // ============================================================
-    // TECLADO
-    // ============================================================
-
-    addEventListener(
-        'keydown',
-        (event) => {
-
-            if (
-                event.repeat
-            ) {
-                return;
-            }
-
-            // ----------------------------------------------------
-            // P → CAMBIAR MODO
-            // ----------------------------------------------------
-
-            if (
-                event.code ===
-                'KeyP'
-            ) {
-
-                setMode(
-                    mode === 'LAB'
-                        ? 'PERFORMANCE'
-                        : 'LAB'
-                );
-
-            }
-
-            // ----------------------------------------------------
-            // R → RESET
-            // ----------------------------------------------------
-
-            if (
-                event.code ===
-                'KeyR'
-            ) {
-
-                simulation.reset();
-
-            }
-
-            // ----------------------------------------------------
-            // LAB 1–5
-            // ----------------------------------------------------
-
-            if (
-                event.code ===
-                'Digit1'
-            ) {
-
-                applyPreset(
-                    'inertia'
-                );
-
-            }
-
-            if (
-                event.code ===
-                'Digit2'
-            ) {
-
-                applyPreset(
-                    'wind'
-                );
-
-            }
-
-            if (
-                event.code ===
-                'Digit3'
-            ) {
-
-                applyPreset(
-                    'attract'
-                );
-
-            }
-
-            if (
-                event.code ===
-                'Digit4'
-            ) {
-
-                applyPreset(
-                    'repel'
-                );
-
-            }
-
-            if (
-                event.code ===
-                'Digit5'
-            ) {
-
-                applyPreset(
-                    'vortex'
-                );
-
-            }
-
-        }
-    );
-
-    // ============================================================
-    // RESIZE
-    // ============================================================
-
-    addEventListener(
-        'resize',
-        () => {
-
-            camera.aspect =
-                innerWidth /
-                innerHeight;
-
-            camera.updateProjectionMatrix();
-
-            renderer.setSize(
-                innerWidth,
-                innerHeight
-            );
-
-        }
-    );
-
-    // ============================================================
-    // RESET INICIAL
-    // ============================================================
-
+  } catch (err) {
+    console.warn('Advertencia en renderer.init():', err);
+  }
+
+  const orbit = new OrbitControls(camera, renderer.domElement);
+  orbit.enableDamping = true;
+  orbit.target.set(0, 0, 0);
+
+  const params = createParameters();
+  const simulation = createSimulation({ renderer, scene, params, count: PARTICLE_COUNT });
+
+  // LAB HELPERS -----------------------------------------------------------
+  const attractorHelper = new THREE.Mesh(
+    new THREE.SphereGeometry(0.12, 16, 12),
+    new THREE.MeshBasicMaterial({ color: '#ffffff' })
+  );
+  scene.add(attractorHelper);
+
+  const axes = new THREE.AxesHelper(1.5);
+  scene.add(axes);
+
+  // POINTER -> WORLD POSITION --------------------------------------------
+  const pointerNdc = new THREE.Vector2();
+  const raycaster = new THREE.Raycaster();
+  const interactionPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+  const hit = new THREE.Vector3();
+
+  window.addEventListener('pointermove', (event) => {
+    pointerNdc.x = (event.clientX / window.innerWidth) * 2 - 1;
+    pointerNdc.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    raycaster.setFromCamera(pointerNdc, camera);
+
+    if (raycaster.ray.intersectPlane(interactionPlane, hit)) {
+      // Compatibilidad: mapea hacia currentCenter o attractor según exista en tu objeto params
+      if (params.currentCenter) {
+        params.currentCenter.value.copy(hit);
+      } else if (params.attractor) {
+        params.attractor.value.copy(hit);
+      }
+      attractorHelper.position.copy(hit);
+    }
+  });
+
+  let paused = false;
+  let mode = 'LAB';
+  let panel;
+  let savedRadialStrength = params.radialStrength.value;
+  let savedRadialEnabled = params.radialEnabled.value;
+
+  const applyPreset = (id) => {
+    params.windEnabled.value = 0;
+    params.radialEnabled.value = 0;
+    params.vortexEnabled.value = 0;
+    params.dragEnabled.value = 0;
+    params.wind.value.set(0, 0, 0);
+    params.initialSpeed.value = 0;
+
+    if (id === 'inertia') {
+      params.initialSpeed.value = 0.8;
+    } else if (id === 'wind') {
+      params.windEnabled.value = 1;
+      params.wind.value.set(1.5, 0, 0);
+    } else if (id === 'attract') {
+      params.radialEnabled.value = 1;
+      params.radialStrength.value = 3.0;
+    } else if (id === 'repel') {
+      params.radialEnabled.value = 1;
+      params.radialStrength.value = -3.0;
+    } else if (id === 'vortex') {
+      params.radialEnabled.value = 1;
+      params.radialStrength.value = 1.0;
+      params.vortexEnabled.value = 1;
+      params.vortexStrength.value = 3.0;
+      params.dragEnabled.value = 1;
+      params.dragCoefficient.value = 0.08;
+    }
     simulation.reset();
+    panel?.refresh();
+  };
 
-    // ============================================================
-    // LOOP
-    // ============================================================
+  const setMode = (next) => {
+    mode = next;
+    const lab = mode === 'LAB';
+    panel.setVisible(lab);
+    axes.visible = lab;
+    attractorHelper.visible = lab;
 
-    renderer.setAnimationLoop(
-        () => {
+    hud.innerHTML = lab
+      ? '<strong>LAB</strong> · P: performance · R: reset · 1–5: pruebas'
+      : '';
+  };
 
-            if (!paused) {
+  panel = createLabPanel({
+    params,
+    onReset: () => simulation.reset(),
+    onPreset: applyPreset,
+    onModeChange: () => setMode(mode === 'LAB' ? 'PERFORMANCE' : 'LAB'),
+    onPauseChange: () => { paused = !paused; }
+  });
 
-                /*
-                 * El gesto se desvanece progresivamente.
-                 *
-                 * Esto hace que un movimiento brusco genere
-                 * una corriente que desaparece gradualmente.
-                 */
+  const hud = document.createElement('div');
+  hud.className = 'hud';
+  document.body.append(hud);
+  setMode('LAB');
 
-                params.currentDirection.value
-                    .multiplyScalar(
-                        0.94
-                    );
+  // BASELINE LIVE INSTRUMENT MAPPING -------------------------------------
+  window.addEventListener('keydown', (event) => {
+    if (event.repeat) return;
+    if (event.code === 'KeyP') setMode(mode === 'LAB' ? 'PERFORMANCE' : 'LAB');
+    if (event.code === 'KeyR') simulation.reset();
+    if (event.code === 'Digit1') applyPreset('inertia');
+    if (event.code === 'Digit2') applyPreset('wind');
+    if (event.code === 'Digit3') applyPreset('attract');
+    if (event.code === 'Digit4') applyPreset('repel');
+    if (event.code === 'Digit5') applyPreset('vortex');
 
-                simulation.stepSimulation();
+    if (event.code === 'Space') {
+      event.preventDefault();
+      savedRadialStrength = params.radialStrength.value;
+      savedRadialEnabled = params.radialEnabled.value;
+      params.radialEnabled.value = 1;
+      params.radialStrength.value = -(savedRadialStrength || 2.0);
+    }
+  });
 
-            }
+  window.addEventListener('keyup', (event) => {
+    if (event.code === 'Space') {
+      params.radialEnabled.value = savedRadialEnabled;
+      params.radialStrength.value = savedRadialStrength;
+    }
+  });
 
-            orbit.update();
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
 
-            renderer.render(
-                scene,
-                camera
-            );
+  simulation.reset();
 
-        }
-    );
-
+  // FRAME LOOP ------------------------------------------------------------
+  renderer.setAnimationLoop(() => {
+    if (!paused) simulation.stepSimulation();
+    orbit.update();
+    renderer.render(scene, camera);
+  });
 }
 
-
-// ================================================================
-// ERRORES
-// ================================================================
-
-main().catch(
-    (error) => {
-
-        console.error(
-            error
-        );
-
-        const pre =
-            document.createElement(
-                'pre'
-            );
-
-        pre.style.cssText =
-            `
-            position:fixed;
-            inset:16px;
-            white-space:pre-wrap;
-            color:#fff;
-            background:#050607;
-            padding:20px;
-            z-index:50;
-            overflow:auto;
-            `;
-
-        pre.textContent =
-            String(
-                error?.stack ||
-                error
-            );
-
-        document.body.appendChild(
-            pre
-        );
-
-    }
-);
+main().catch((error) => {
+  console.error(error);
+  const pre = document.createElement('pre');
+  pre.style.cssText = 'position:fixed;inset:16px;white-space:pre-wrap;color:#fff;z-index:50';
+  pre.textContent = String(error?.stack || error);
+  document.body.append(pre);
+});
