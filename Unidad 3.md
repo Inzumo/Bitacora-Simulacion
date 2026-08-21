@@ -30,7 +30,56 @@ Finalmente dividí la experiencia en dos modos. El Modo LAB lo utilicé para pro
 
 La intención final no era solamente hacer una simulación de partículas que se viera bien, sino convertirla en una especie de instrumento visual, donde yo pudiera controlar la tensión del sistema mientras escucho la música y decidir en qué momento mantener las partículas juntas y en qué momento hacer que todo explote.
 
-Interpretación e Intención Musical (LesAlpx — Floating Points)El desarrollo de este instrumento parte de una premisa central: la música no controla el sistema de forma automática, sino que el usuario interpreta la música en tiempo real.La pieza LesAlpx de Floating Points se caracteriza por una construcción orgánica y progresiva de tensión electrónica. No es un tema estático, sino una acumulación constante de capas rítmicas y armónicas que culminan en momentos de liberación de energía. Para traducir esa experiencia a un lenguaje puramente visual y físico, definimos una tensión fundamental entre cohesión (núcleo) y expansión (caos).La Traducción de la Música a Fuerzas FísicasCada momento de la pieza musical encuentra su equivalente físico en el comportamiento del enjambre de 30.000 partículas:El Núcleo Orgánico (Cohesión): Representa los pasajes contenidos y atmosféricos de la canción. Cuando la música inicia con su pulso constante, el instrumento responde con una fuerza radial de atracción ($k < 0$). Las partículas se concentran alrededor del cursor formando una masa densa y brillante, simulando un cuerpo celestial u orgánico en equilibrio retenido.El Fluido y la Turbulencia (Vórtice): A medida que entran las percusiones y las líneas de sintetizador, el sistema añade la fuerza de vórtice. Esto transforma la atracción simple en un movimiento helicoidal y circular. Visualmente, el núcleo no se queda estático: empieza a girar como una galaxia o un fluido en ebullición, respondiendo a la complejidad rítmica del tema.La Explosión / El Drop (Expansión): El clímax de LesAlpx ocurre cuando la estructura rítmica rompe con violencia. En el instrumento, esto se interpreta invirtiendo el signo de la fuerza radial mediante la Barra Espaciadora ($k \to +18.0$). Al presionar la tecla, la atracción colapsa instantáneamente y se convierte en una onda de choque de repulsión que hace estallar el núcleo, dispersando las partículas por todo el espacio visual.El Retorno y la Memoria (Drag / Amortiguamiento): Al soltar la barra espaciadora, la fuerza de drag (fricción) frena la dispersión caótica. Las partículas disipan su energía cinética residual y la atracción vuelve a reunir la masa luminosa en un nuevo núcleo. Esto simula el descanso entre frases musicales y la preparación para el siguiente golpe rítmico.
+## Interpretación e Intención Musical — *LesAlpx* de Floating Points
+
+Una de las cosas que tuve que definir durante el desarrollo fue cómo quería relacionar la música con el comportamiento de las partículas. No quería que la música simplemente controlara automáticamente la simulación, sino que **yo pudiera escucharla e interpretar lo que estaba pasando para después conducir el sistema en tiempo real**.
+
+La pieza que escogí fue *LesAlpx* de Floating Points. Lo que más me interesó de la canción fue cómo va construyendo tensión poco a poco, agregando diferentes capas y aumentando la sensación de movimiento hasta llegar a momentos donde toda esa energía se libera.
+
+A partir de eso decidí trabajar con una tensión entre **cohesión y expansión**. La idea es que las partículas puedan formar un núcleo que se mantiene unido y, en determinados momentos, ese núcleo pueda romperse y expandirse.
+
+### El núcleo orgánico — Cohesión
+
+Al comienzo, cuando la música se siente más contenida, utilizo la fuerza radial de atracción:
+
+$$
+k < 0
+$$
+
+Esto hace que las partículas se acerquen al cursor y formen una masa más concentrada. Visualmente quería que se sintiera como un cuerpo que tiene mucha energía internamente, pero que todavía está contenido.
+
+Por eso el núcleo funciona como una representación de los momentos donde la música todavía está acumulando tensión.
+
+### El fluido y la turbulencia — Vórtice
+
+A medida que la canción empieza a tener más movimiento, agrego la fuerza de vórtice.
+
+Esta fuerza hace que las partículas no solamente se acerquen al centro, sino que también comiencen a girar alrededor de él. De esta manera el núcleo deja de verse como una masa estática y empieza a comportarse más como un fluido o una especie de galaxia.
+
+Me interesaba este comportamiento porque permite que la tensión se vea en el movimiento sin necesidad de hacer que las partículas simplemente se muevan más rápido.
+
+### La explosión — Drop
+
+El momento que más quería representar era el **Drop**, porque es donde siento que toda la tensión que se venía acumulando finalmente se libera.
+
+Para esto utilizo la Barra Espaciadora para cambiar la fuerza radial de atracción a repulsión:
+
+$$
+k \rightarrow +18.0
+$$
+
+Cuando presiono la tecla, las partículas dejan de concentrarse y empiezan a alejarse del centro. El núcleo se rompe y la masa de partículas se expande rápidamente por el espacio.
+
+Este cambio es importante porque no es solamente un cambio visual: es el momento donde yo, como usuario, puedo intervenir y decidir cuándo liberar la tensión que venía construyendo.
+
+### El retorno — Drag
+
+Después de la explosión, la fuerza de drag ayuda a reducir progresivamente la velocidad de las partículas. Esto evita que el sistema se quede completamente descontrolado y permite que el movimiento vuelva a ser más manejable.
+
+Para mí, esta parte representa el momento después de la liberación de energía, donde el sistema empieza a estabilizarse y queda preparado para volver a construir tensión.
+
+En general, la intención es que **la música me sirva como guía para conducir el instrumento**, pero que la simulación no sea una animación completamente predeterminada. Yo escucho la canción, identifico cuándo se está acumulando tensión y cuándo llega el momento de liberarla, y utilizo el mouse y la Barra Espaciadora para llevar esas sensaciones al movimiento de las partículas.
+
 
 ## Tabla de Criterios
 
