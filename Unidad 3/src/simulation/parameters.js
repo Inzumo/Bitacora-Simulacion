@@ -1,37 +1,27 @@
 export function createParameters() {
-  const params = {
-    // Aseguramos valores numéricos válidos en la estructura plana
+  return {
     timeScale: 1.0,
     maxSpeed: 5.0,
-    particleSize: 0.05,
-    
-    // Fuerzas
-    radialEnabled: 0,
-    radialStrength: 0.5,
-    vortexEnabled: 0,
-    vortexStrength: 1.0,
-    curlEnabled: 0,
-    curlStrength: 0.5,
-    dragEnabled: 0,
+    particleSize: 0.15,
     damping: 0.98,
     
-    // Vectores / Referencias
+    radialEnabled: 1.0,
+    radialStrength: 0.5,
+    vortexEnabled: 0.0,
+    vortexStrength: 1.0,
+    curlEnabled: 0.0,
+    curlStrength: 0.5,
+    dragEnabled: 0.0,
+    
     attractor: [0, 0, 0],
     currentCenter: [0, 0, 0],
     wind: [0, 0, 0],
     bounds: [5, 5, 5]
   };
-
-  // Mantener compatibilidad con params.targets para Tweakpane/Lil-GUI
-  params.targets = params;
-
-  return params;
 }
 
 export function updateParametersSmoothly(params, lerpFactor = 0.05) {
-  // Garantizar protección contra NaN si un slider de la UI falla
-  if (isNaN(params.radialStrength)) params.radialStrength = 0.5;
-  if (isNaN(params.particleSize)) params.particleSize = 0.05;
+  // Aplicación directa sin interpolaciones
 }
 
 export const presets = {
