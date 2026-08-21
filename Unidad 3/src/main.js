@@ -6,20 +6,7 @@ import { createParameters, updateParametersSmoothly, presets } from './simulatio
 import { createSimulation } from './simulation/createSimulation.js';
 import { createLabPanel } from './ui/labPanel.js';
 
-/*
-2^15: 32768
-2^16: 65536
-2^17: 131072
-2^18: 262144
-2^19: 524288
-2^20: 1048576
-2^21: 2097152
-2^22: 4194304
-2^23: 8388608
-2^24: 16777216
-*/
-
-const PARTICLE_COUNT = 131072; // 2^17. Increase only after measuring performance.
+const PARTICLE_COUNT = 131072; // 2^17
 
 async function main() {
   const mount = document.querySelector('#app');
@@ -29,7 +16,7 @@ async function main() {
     throw new Error('Este proyecto requiere WebGPU para ejecutar compute shaders.');
   }
 
-  // THREE.JS MENTAL MODEL: scene + camera + renderer ---------------------
+  // SCENE, CAMERA, RENDERER
   const scene = new THREE.Scene();
   scene.background = new THREE.Color('#050607');
 
@@ -41,12 +28,7 @@ async function main() {
   renderer.setSize(window.innerWidth, window.innerHeight);
   mount.appendChild(renderer.domElement);
 
-  // Inicialización asíncrona obligatoria del WebGPURenderer
-  try {
-    await renderer.init();
-  } catch (err) {
-    console.warn('Advertencia en renderer.init():', err);
-  }
+  await renderer.init();
 
   const orbit = new OrbitControls(camera, renderer.domElement);
   orbit.enableDamping = true;
@@ -55,7 +37,7 @@ async function main() {
   const params = createParameters();
   const simulation = createSimulation({ renderer, scene, params, count: PARTICLE_COUNT });
 
-  // LAB HELPERS -----------------------------------------------------------
+  // HELPERS
   const attractorHelper = new THREE.Mesh(
     new THREE.SphereGeometry(0.12, 16, 12),
     new THREE.MeshBasicMaterial({ color: '#ffffff' })
@@ -65,7 +47,7 @@ async function main() {
   const axes = new THREE.AxesHelper(1.5);
   scene.add(axes);
 
-  // POINTER -> WORLD POSITION --------------------------------------------
+  // POINTER INTERACTION
   const pointerNdc = new THREE.Vector2();
   const raycaster = new THREE.Raycaster();
   const interactionPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
@@ -99,6 +81,7 @@ async function main() {
     else if (id === 'repel' || id === 'preset4') presets.preset4(params);
     else if (id === 'vortex' || id === 'preset5') presets.preset5(params);
 
+    simulation.reset();
     panel?.refresh();
   };
 
@@ -127,7 +110,7 @@ async function main() {
   document.body.append(hud);
   setMode('LAB');
 
-  // BASELINE LIVE INSTRUMENT MAPPING -------------------------------------
+  // KEYBOARD EVENTS
   window.addEventListener('keydown', (event) => {
     if (event.repeat) return;
     if (event.code === 'KeyP') setMode(mode === 'LAB' ? 'PERFORMANCE' : 'LAB');
@@ -162,30 +145,13 @@ async function main() {
 
   simulation.reset();
 
-  // FRAME LOOP (WebGPU Async Render Loop) --------------------------------
-  let isComputing = false;
-
-  renderer.setAnimationLoop(async () => {
-    // Interpola suavemente todos los parámetros hacia los objetivos deseados
+  // FRAME LOOP ORIGINAL
+  renderer.setAnimationLoop(() => {
     updateParametersSmoothly(params, 0.05);
 
-    if (!paused && !isComputing) {
-      isComputing = true;
-      
-      // 1. Despacha el Compute Shader a través de la función/nodo de simulación
-      if (simulation.computeNode) {
-        await renderer.computeAsync(simulation.computeNode);
-      } else {
-        simulation.stepSimulation();
-      }
-
-      isComputing = false;
-    }
-
+    if (!paused) simulation.stepSimulation();
     orbit.update();
-    
-    // 2. Renderiza la escena gráfica
-    await renderer.renderAsync(scene, camera);
+    renderer.render(scene, camera);
   });
 }
 
