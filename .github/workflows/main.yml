@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./"Unidad 3"
+        working-directory: './Unidad 3'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -44,7 +44,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./"Unidad 3"/dist
+          path: './Unidad 3/dist'
 
       - name: Deploy
         id: deployment
