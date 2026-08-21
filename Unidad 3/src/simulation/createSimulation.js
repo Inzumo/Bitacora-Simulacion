@@ -30,11 +30,11 @@ export function createSimulation({
     const velocityBuffer = instancedArray(count, 'vec3');
 
     // ============================================================
-    // UNIFORMS
+    // UNIFORMS (Instanciados directamente en WebGPU)
     // ============================================================
 
-    const currentCenter = uniform(params.currentCenter.value);
-    const currentDirection = uniform(params.currentDirection.value);
+    const currentCenter = uniform(params.currentCenter.value.clone());
+    const currentDirection = uniform(params.currentDirection.value.clone());
     const currentStrength = uniform(params.currentStrength.value);
     const currentRadius = uniform(params.currentRadius.value);
     const currentEnabled = uniform(params.currentEnabled.value);
@@ -50,7 +50,7 @@ export function createSimulation({
     const vortexEnabled = uniform(params.vortexEnabled.value);
     const vortexSoftness = uniform(params.vortexSoftness.value);
 
-    const wind = uniform(params.wind.value);
+    const wind = uniform(params.wind.value.clone());
     const windEnabled = uniform(params.windEnabled.value);
 
     const curlEnabled = uniform(params.curlEnabled.value);
@@ -60,7 +60,7 @@ export function createSimulation({
 
     const dt = uniform(params.timeStep.value);
     const maxSpeed = uniform(params.maxSpeed.value);
-    const bounds = uniform(params.bounds.value);
+    const bounds = uniform(params.bounds.value.clone());
 
     // ============================================================
     // RESET COMPUTE (Distribución Esférica Orgánica)
@@ -144,7 +144,7 @@ export function createSimulation({
         // 5. Viento
         acceleration.addAssign(wind.mul(windEnabled));
 
-        // 6. Campo Armónico Oscilatorio (Turbulencia Alternativa)
+        // 6. Campo Armónico Oscilatorio (Turbulencia)
         const np = position.mul(noiseScale);
         const harmonicNoise = vec3(
             sin(np.y.mul(1.5).add(noiseSpeed)).add(cos(np.z.mul(0.8))),
@@ -169,17 +169,17 @@ export function createSimulation({
         position.addAssign(velocity.mul(dt));
 
         // Colisión en límites con amortiguamiento
-        If(position.x.greaterThan(bounds.x), () => { position.x.assign(bounds.x); velocity.x.assign(velocity.x.negate().mul(0.8)); });
-        If(position.x.lessThan(bounds.x.negate()), () => { position.x.assign(bounds.x.negate()); velocity.x.assign(velocity.x.negate().mul(0.8)); });
-        If(position.y.greaterThan(bounds.y), () => { position.y.assign(bounds.y); velocity.y.assign(velocity.y.negate().mul(0.8)); });
-        If(position.y.lessThan(bounds.y.negate()), () => { position.y.assign(bounds.y.negate()); velocity.y.assign(velocity.y.negate().mul(0.8)); });
-        If(position.z.greaterThan(bounds.z), () => { position.z.assign(bounds.z); velocity.z.assign(velocity.z.negate().mul(0.8)); });
-        If(position.z.lessThan(bounds.z.negate()), () => { position.z.assign(bounds.z.negate()); velocity.z.assign(velocity.z.negate().mul(0.8)); });
+        If(position.x.greaterThan(bounds.value.x), () => { position.x.assign(bounds.value.x); velocity.x.assign(velocity.x.negate().mul(0.8)); });
+        If(position.x.lessThan(bounds.value.x.negate()), () => { position.x.assign(bounds.value.x.negate()); velocity.x.assign(velocity.x.negate().mul(0.8)); });
+        If(position.y.greaterThan(bounds.value.y), () => { position.y.assign(bounds.value.y); velocity.y.assign(velocity.y.negate().mul(0.8)); });
+        If(position.y.lessThan(bounds.value.y.negate()), () => { position.y.assign(bounds.value.y.negate()); velocity.y.assign(velocity.y.negate().mul(0.8)); });
+        If(position.z.greaterThan(bounds.value.z), () => { position.z.assign(bounds.value.z); velocity.z.assign(velocity.z.negate().mul(0.8)); });
+        If(position.z.lessThan(bounds.value.z.negate()), () => { position.z.assign(bounds.value.z.negate()); velocity.z.assign(velocity.z.negate().mul(0.8)); });
 
     })().compute(count);
 
     // ============================================================
-    // MATERIAL Y SHADER DE COLOR DINÁMICO (Morado -> Rojo Neón)
+    // MATERIAL Y SHADER DE COLOR DINÁMICO
     // ============================================================
 
     const particleMaterial = new THREE.SpriteNodeMaterial({
@@ -191,11 +191,9 @@ export function createSimulation({
     particleMaterial.positionNode = positionBuffer.toAttribute();
     particleMaterial.scaleNode = params.particleSize.value;
 
-    // Magnitud de velocidad normalizada
     const currentVel = velocityBuffer.toAttribute();
     const velSpeed = currentVel.length().div(maxSpeed);
 
-    // Paleta: Morado Profundo -> Rojo Neón Eléctrico
     const baseColor = vec3(0.25, 0.02, 0.55); 
     const fastColor = vec3(1.0, 0.05, 0.25);  
 
@@ -209,33 +207,45 @@ export function createSimulation({
     particles.count = count;
     scene.add(particles);
 
+    // Ejecutar el reset inicial sin congelar
+    renderer.computeAsync(resetCompute);
+
     // ============================================================
-    // MÉTODOS DE CONTROL
+    // MÉTODOS DE CONTROL SUAVES (SIN RE-COMPUTAR EN CPU)
     // ============================================================
 
     function updateUniforms() {
-        currentCenter.value.copy(params.currentCenter.value);
-        currentDirection.value.copy(params.currentDirection.value);
+        // Copia segura de componentes Vector3 sin instanciar nuevos objetos
+        if (params.currentCenter?.value) currentCenter.value.copy(params.currentCenter.value);
+        if (params.currentDirection?.value) currentDirection.value.copy(params.currentDirection.value);
+        if (params.wind?.value) wind.value.copy(params.wind.value);
+        if (params.bounds?.value) bounds.value.copy(params.bounds.value);
+
+        // Asignación rápida de escalares
         currentStrength.value = params.currentStrength.value;
         currentRadius.value = params.currentRadius.value;
-        currentEnabled.value = params.currentEnabled.value;
+        currentEnabled.value = params.currentEnabled.value ? 1.0 : 0.0;
+
         dragCoefficient.value = params.dragCoefficient.value;
-        dragEnabled.value = params.dragEnabled.value;
+        dragEnabled.value = params.dragEnabled.value ? 1.0 : 0.0;
+
         radialStrength.value = params.radialStrength.value;
-        radialEnabled.value = params.radialEnabled.value;
+        radialEnabled.value = params.radialEnabled.value ? 1.0 : 0.0;
         radialSoftness.value = params.radialSoftness.value;
+
         vortexStrength.value = params.vortexStrength.value;
-        vortexEnabled.value = params.vortexEnabled.value;
+        vortexEnabled.value = params.vortexEnabled.value ? 1.0 : 0.0;
         vortexSoftness.value = params.vortexSoftness.value;
-        wind.value.copy(params.wind.value);
-        windEnabled.value = params.windEnabled.value;
-        curlEnabled.value = params.curlEnabled.value;
+
+        windEnabled.value = params.windEnabled.value ? 1.0 : 0.0;
+
+        curlEnabled.value = params.curlEnabled.value ? 1.0 : 0.0;
         curlStrength.value = params.curlStrength.value;
         noiseScale.value = params.noiseScale.value;
         noiseSpeed.value = params.noiseSpeed.value;
+
         dt.value = params.timeStep.value;
         maxSpeed.value = params.maxSpeed.value;
-        bounds.value.copy(params.bounds.value);
     }
 
     function reset() {
@@ -243,9 +253,9 @@ export function createSimulation({
         renderer.computeAsync(resetCompute);
     }
 
+    // `stepSimulation` ahora es ultra liviano
     function stepSimulation() {
         updateUniforms();
-        renderer.compute(computeSimulation);
     }
 
     return {
