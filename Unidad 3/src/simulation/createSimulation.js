@@ -1,87 +1,282 @@
 import * as THREE from 'three/webgpu';
-import { Fn, instancedArray, float, vec4, uniform, instanceIndex } from 'three/tsl';
 
-export function createSimulation({ renderer, scene, params, count }) {
-  const positionBuffer = instancedArray(count, 'vec4');
-  const velocityBuffer = instancedArray(count, 'vec4');
+import {
+    Fn,
+    If,
+    float,
+    vec3,
+    uniform,
+    instancedArray,
+    instanceIndex,
+    hash,
+    smoothstep,
+    sin,
+    cos,
+    mix
+} from 'three/tsl';
 
-  const uDamping = uniform(params.damping);
-  const uRadialStrength = uniform(params.radialStrength);
-  const uParticleSize = uniform(params.particleSize);
-  const uAttractor = uniform(new THREE.Vector3(0, 0, 0));
+export function createSimulation({
+    renderer,
+    scene,
+    params,
+    count
+}) {
 
-  // Compute Shader: Reset
-  const initParticles = Fn(() => {
-    const index = instanceIndex;
+    // ============================================================
+    // BUFFERS GPU
+    // ============================================================
 
-    const phi = float(index).mul(0.101);
-    const theta = float(index).mul(0.053);
-    const radius = float(index).mod(1000.0).div(1000.0).mul(3.0);
+    const positionBuffer = instancedArray(count, 'vec3');
+    const velocityBuffer = instancedArray(count, 'vec3');
 
-    const posX = radius.mul(theta.sin()).mul(phi.cos());
-    const posY = radius.mul(theta.sin()).mul(phi.sin());
-    const posZ = radius.mul(theta.cos());
+    // ============================================================
+    // UNIFORMS
+    // ============================================================
 
-    positionBuffer.element(index).assign(vec4(posX, posY, posZ, 1.0));
-    velocityBuffer.element(index).assign(vec4(0.0, 0.0, 0.0, 0.0));
-  });
+    const currentCenter = uniform(params.currentCenter.value);
+    const currentDirection = uniform(params.currentDirection.value);
+    const currentStrength = uniform(params.currentStrength.value);
+    const currentRadius = uniform(params.currentRadius.value);
+    const currentEnabled = uniform(params.currentEnabled.value);
 
-  const computeInit = initParticles().compute(count);
+    const dragCoefficient = uniform(params.dragCoefficient.value);
+    const dragEnabled = uniform(params.dragEnabled.value);
 
-  // Compute Shader: Física
-  const updateParticles = Fn(() => {
-    const index = instanceIndex;
+    const radialStrength = uniform(params.radialStrength.value);
+    const radialEnabled = uniform(params.radialEnabled.value);
+    const radialSoftness = uniform(params.radialSoftness.value);
 
-    const pos = positionBuffer.element(index).xyz;
-    const vel = velocityBuffer.element(index).xyz;
+    const vortexStrength = uniform(params.vortexStrength.value);
+    const vortexEnabled = uniform(params.vortexEnabled.value);
+    const vortexSoftness = uniform(params.vortexSoftness.value);
 
-    const dir = uAttractor.sub(pos);
-    const dist = dir.length().max(0.1);
-    const force = dir.normalize().mul(uRadialStrength).div(dist);
+    const wind = uniform(params.wind.value);
+    const windEnabled = uniform(params.windEnabled.value);
 
-    const newVel = vel.add(force.mul(0.016)).mul(uDamping);
-    const newPos = pos.add(newVel.mul(0.016));
+    const curlEnabled = uniform(params.curlEnabled.value);
+    const curlStrength = uniform(params.curlStrength.value);
+    const noiseScale = uniform(params.noiseScale.value);
+    const noiseSpeed = uniform(params.noiseSpeed.value);
 
-    positionBuffer.element(index).assign(vec4(newPos, 1.0));
-    velocityBuffer.element(index).assign(vec4(newVel, 0.0));
-  });
+    const dt = uniform(params.timeStep.value);
+    const maxSpeed = uniform(params.maxSpeed.value);
+    const bounds = uniform(params.bounds.value);
 
-  const computeSimulation = updateParticles().compute(count);
+    // ============================================================
+    // RESET COMPUTE (Distribución Esférica Orgánica)
+    // ============================================================
 
-  // Construcción visual del objeto de partículas
-  const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(count * 3), 3));
-  geometry.drawRange.count = count;
+    const resetCompute = Fn(() => {
+        const index = float(instanceIndex);
 
-  const material = new THREE.PointsNodeMaterial({
-    transparent: true,
-    depthWrite: false,
-    blending: THREE.AdditiveBlending
-  });
+        const u = hash(index.mul(12.9898));
+        const v = hash(index.mul(78.233));
+        const radius = hash(index.mul(37.719)).mul(3.5);
 
-  material.positionNode = positionBuffer.toAttribute();
-  material.sizeNode = uParticleSize;
-  material.colorNode = vec4(0.2, 0.6, 1.0, 0.8);
+        const theta = u.mul(Math.PI * 2.0);
+        const phi = v.sub(0.5).mul(Math.PI);
 
-  const points = new THREE.Points(geometry, material);
-  scene.add(points);
+        const px = radius.mul(cos(phi)).mul(cos(theta));
+        const py = radius.mul(cos(phi)).mul(sin(theta));
+        const pz = radius.mul(sin(phi));
 
-  return {
-    computeSimulation,
-    stepSimulation: () => {
-      uDamping.value = params.damping ?? 0.98;
-      uRadialStrength.value = params.radialStrength ?? 0.5;
-      uParticleSize.value = params.particleSize ?? 0.15;
+        const randomPosition = vec3(px, py, pz);
 
-      if (params.attractor) {
-        if (params.attractor.isVector3) uAttractor.value.copy(params.attractor);
-        else if (Array.isArray(params.attractor)) uAttractor.value.set(...params.attractor);
-      }
+        const speed = float(params.initialSpeed.value);
+        const initialVelocity = vec3(
+            hash(index.mul(15.1)).sub(0.5),
+            hash(index.mul(26.2)).sub(0.5),
+            hash(index.mul(43.3)).sub(0.5)
+        ).normalize().mul(speed);
 
-      renderer.compute(computeSimulation);
-    },
-    reset: () => {
-      renderer.compute(computeInit);
+        positionBuffer.element(instanceIndex).assign(randomPosition);
+        velocityBuffer.element(instanceIndex).assign(initialVelocity);
+
+    })().compute(count);
+
+    // ============================================================
+    // SIMULATION COMPUTE (Física Personalizada)
+    // ============================================================
+
+    const computeSimulation = Fn(() => {
+        const position = positionBuffer.element(instanceIndex);
+        const velocity = velocityBuffer.element(instanceIndex);
+
+        const acceleration = vec3(0, 0, 0).toVar();
+
+        // 1. Corriente local
+        const toParticle = position.sub(currentCenter);
+        const distance = toParticle.length();
+        const influence = float(1.0).sub(
+            smoothstep(currentRadius.mul(0.2), currentRadius, distance)
+        );
+
+        acceleration.addAssign(
+            currentDirection.mul(currentStrength).mul(influence).mul(currentEnabled)
+        );
+
+        // 2. Drag
+        acceleration.addAssign(
+            velocity.mul(dragCoefficient).negate().mul(dragEnabled)
+        );
+
+        // 3. Atracción / Repulsión Radial
+        const radialVector = currentCenter.sub(position);
+        const radialDistance = radialVector.length();
+        const radialDenominator = radialDistance.mul(radialDistance).add(radialSoftness.mul(radialSoftness)).add(0.001);
+
+        acceleration.addAssign(
+            radialVector.mul(radialStrength).div(radialDenominator).mul(radialEnabled)
+        );
+
+        // 4. Vórtice Hiperbólico Trifásico
+        const perpendicular = vec3(
+            radialVector.y.negate().add(sin(position.z)),
+            radialVector.x.sub(cos(position.z)),
+            sin(radialDistance)
+        );
+        const vortexDenominator = radialDistance.add(vortexSoftness).add(0.001);
+
+        acceleration.addAssign(
+            perpendicular.mul(vortexStrength).div(vortexDenominator).mul(vortexEnabled)
+        );
+
+        // 5. Viento
+        acceleration.addAssign(wind.mul(windEnabled));
+
+        // 6. Campo Armónico Oscilatorio (Turbulencia Alternativa)
+        const np = position.mul(noiseScale);
+        const harmonicNoise = vec3(
+            sin(np.y.mul(1.5).add(noiseSpeed)).add(cos(np.z.mul(0.8))),
+            cos(np.z.mul(1.2).add(noiseSpeed)).add(sin(np.x.mul(1.1))),
+            sin(np.x.mul(0.9).add(noiseSpeed)).add(cos(np.y.mul(1.3)))
+        );
+
+        acceleration.addAssign(
+            harmonicNoise.mul(curlStrength).mul(curlEnabled)
+        );
+
+        // Integración Euler
+        velocity.addAssign(acceleration.mul(dt));
+
+        // Límite de velocidad
+        const speed = velocity.length();
+        If(speed.greaterThan(maxSpeed), () => {
+            velocity.assign(velocity.normalize().mul(maxSpeed));
+        });
+
+        // Actualización de posición
+        position.addAssign(velocity.mul(dt));
+
+        // Colisión en límites con amortiguamiento
+        If(position.x.greaterThan(bounds.x), () => { position.x.assign(bounds.x); velocity.x.assign(velocity.x.negate().mul(0.8)); });
+        If(position.x.lessThan(bounds.x.negate()), () => { position.x.assign(bounds.x.negate()); velocity.x.assign(velocity.x.negate().mul(0.8)); });
+        If(position.y.greaterThan(bounds.y), () => { position.y.assign(bounds.y); velocity.y.assign(velocity.y.negate().mul(0.8)); });
+        If(position.y.lessThan(bounds.y.negate()), () => { position.y.assign(bounds.y.negate()); velocity.y.assign(velocity.y.negate().mul(0.8)); });
+        If(position.z.greaterThan(bounds.z), () => { position.z.assign(bounds.z); velocity.z.assign(velocity.z.negate().mul(0.8)); });
+        If(position.z.lessThan(bounds.z.negate()), () => { position.z.assign(bounds.z.negate()); velocity.z.assign(velocity.z.negate().mul(0.8)); });
+
+    })().compute(count);
+
+    // ============================================================
+    // MATERIAL Y SHADER DE COLOR DINÁMICO (Morado -> Rojo Neón)
+    // ============================================================
+
+    const particleMaterial = new THREE.SpriteNodeMaterial({
+        transparent: true,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending
+    });
+
+    particleMaterial.positionNode = positionBuffer.toAttribute();
+    particleMaterial.scaleNode = params.particleSize.value;
+
+    // Magnitud de velocidad normalizada
+    const currentVel = velocityBuffer.toAttribute();
+    const velSpeed = currentVel.length().div(maxSpeed);
+
+    // Paleta: Morado Profundo -> Rojo Neón Eléctrico
+    const baseColor = vec3(0.25, 0.02, 0.55); 
+    const fastColor = vec3(1.0, 0.05, 0.25);  
+
+    particleMaterial.colorNode = mix(baseColor, fastColor, smoothstep(0.05, 0.7, velSpeed));
+
+    // ============================================================
+    // INSTANCIACIÓN
+    // ============================================================
+
+    const particles = new THREE.Sprite(particleMaterial);
+    particles.count = count;
+    scene.add(particles);
+
+    // ============================================================
+    // MÉTODOS DE CONTROL
+    // ============================================================
+
+    function updateUniforms() {
+        currentCenter.value.copy(params.currentCenter.value);
+        currentDirection.value.copy(params.currentDirection.value);
+        currentStrength.value = params.currentStrength.value;
+        currentRadius.value = params.currentRadius.value;
+        currentEnabled.value = params.currentEnabled.value;
+        dragCoefficient.value = params.dragCoefficient.value;
+        dragEnabled.value = params.dragEnabled.value;
+        radialStrength.value = params.radialStrength.value;
+        radialEnabled.value = params.radialEnabled.value;
+        radialSoftness.value = params.radialSoftness.value;
+        vortexStrength.value = params.vortexStrength.value;
+        vortexEnabled.value = params.vortexEnabled.value;
+        vortexSoftness.value = params.vortexSoftness.value;
+        wind.value.copy(params.wind.value);
+        windEnabled.value = params.windEnabled.value;
+        curlEnabled.value = params.curlEnabled.value;
+        curlStrength.value = params.curlStrength.value;
+        noiseScale.value = params.noiseScale.value;
+        noiseSpeed.value = params.noiseSpeed.value;
+        dt.value = params.timeStep.value;
+        maxSpeed.value = params.maxSpeed.value;
+        bounds.value.copy(params.bounds.value);
     }
-  };
+
+    function reset() {
+        updateUniforms();
+        renderer.computeAsync(resetCompute);
+    }
+
+    function stepSimulation() {
+        updateUniforms();
+        renderer.compute(computeSimulation);
+    }
+
+    return {
+        positionBuffer,
+        velocityBuffer,
+        reset,
+        stepSimulation,
+        computeSimulation,
+        resetCompute,
+        particles,
+        uniforms: {
+            currentCenter,
+            currentDirection,
+            currentStrength,
+            currentRadius,
+            currentEnabled,
+            dragCoefficient,
+            dragEnabled,
+            radialStrength,
+            radialEnabled,
+            vortexStrength,
+            vortexEnabled,
+            wind,
+            windEnabled,
+            curlEnabled,
+            curlStrength,
+            noiseScale,
+            noiseSpeed,
+            dt,
+            maxSpeed,
+            bounds
+        }
+    };
 }
