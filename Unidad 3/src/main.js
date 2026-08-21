@@ -1,147 +1,73 @@
-import * as THREE from 'three';
+import * as THREE from 'three/webgpu';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import WebGPU from 'three/addons/capabilities/WebGPU.js';
+
+import { createParameters, presets } from './simulation/parameters.js';
+import { createSimulation } from './simulation/createSimulation.js';
 import { createLabPanel } from './ui/labPanel.js';
 
-// ============================================================
-// 1. ESTADO GLOBAL Y PARÁMETROS (UNIFORMS)
-// ============================================================
-let isLabMode = true;
-let isPaused = false;
-let previousRadialStrength = -3.0;
+const PARTICLE_COUNT = 65536;
 
-// Objeto de parámetros que alimentan la GPU y la UI
-const params = {
-    timeStep: { value: 0.016 },
-    maxSpeed: { value: 5.0 },
-    particleSize: { value: 0.035 },
+async function main() {
+  const mount = document.querySelector('#app');
 
-    // Fuerza Radial
-    radialEnabled: { value: 1 },
-    radialStrength: { value: -3.0 }, // Negativo = Atracción, Positivo = Repulsión
+  if (!WebGPU.isAvailable()) {
+    mount.appendChild(WebGPU.getErrorMessage());
+    return;
+  }
 
-    // Vórtice
-    vortexEnabled: { value: 1 },
-    vortexStrength: { value: 3.0 },
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color('#050607');
 
-    // Turbulencia / Ruido Armónico
-    curlEnabled: { value: 0 },
-    curlStrength: { value: 2.0 },
+  const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.05, 100);
+  camera.position.set(0, 0, 11);
 
-    // Drag (Fricción/Amortiguamiento)
-    dragEnabled: { value: 1 },
-    dragCoefficient: { value: 0.08 },
+  const renderer = new THREE.WebGPURenderer({ antialias: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  mount.appendChild(renderer.domElement);
 
-    // Viento
-    windEnabled: { value: 0 },
-    wind: { value: new THREE.Vector2(0, 0) }
-};
+  await renderer.init();
 
-// ============================================================
-// 2. INICIALIZACIÓN DE LA UI (LAB PANEL)
-// ============================================================
-const labPanel = createLabPanel({
-    params: params,
-    onReset: () => resetSimulation(),
-    onPreset: (presetKey) => applyPreset(presetKey),
-    onModeChange: () => toggleMode(),
-    onPauseChange: () => togglePause()
-});
+  const orbit = new OrbitControls(camera, renderer.domElement);
+  orbit.enableDamping = true;
 
-function toggleMode() {
-    isLabMode = !isLabMode;
-    labPanel.setVisible(isLabMode);
+  const params = createParameters();
+  const simulation = createSimulation({ renderer, scene, params, count: PARTICLE_COUNT });
+
+  const axes = new THREE.AxesHelper(1.5);
+  scene.add(axes);
+
+  // Inicializar partículas en la GPU
+  simulation.reset();
+
+  let paused = false;
+
+  createLabPanel({
+    params,
+    onReset: () => simulation.reset(),
+    onPreset: (id) => {
+      if (presets[id]) presets[id](params);
+      simulation.reset();
+    },
+    onPauseChange: () => {
+      paused = !paused;
+    }
+  });
+
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+
+  renderer.setAnimationLoop(() => {
+    if (!paused) {
+      simulation.stepSimulation();
+    }
+    orbit.update();
+    renderer.render(scene, camera);
+  });
 }
 
-function togglePause() {
-    isPaused = !isPaused;
-}
-
-function resetSimulation() {
-    // AQUÍ: Invoca el método de reinicio de tus partículas/GPU
-    // e.g., simulation.reset();
-    console.log("Simulación reiniciada.");
-    labPanel.refresh();
-}
-
-// ============================================================
-// 3. PRESETS DE LABORATORIO (ESCENARIOS 1 A 5)
-// ============================================================
-function applyPreset(presetKey) {
-    // Desactivar todas las fuerzas por defecto
-    params.radialEnabled.value = 0;
-    params.vortexEnabled.value = 0;
-    params.curlEnabled.value = 0;
-    params.dragEnabled.value = 0;
-    params.windEnabled.value = 0;
-
-    switch (String(presetKey)) {
-        case '1': // Inercia pura
-            break;
-
-        case '2': // Viento constante
-            params.windEnabled.value = 1;
-            params.wind.value.set(2.0, 0.0);
-            break;
-
-        case '3': // Atracción radial
-            params.radialEnabled.value = 1;
-            params.radialStrength.value = -5.0;
-            break;
-
-        case '4': // Repulsión radial
-            params.radialEnabled.value = 1;
-            params.radialStrength.value = 8.0;
-            break;
-
-        case '5': // Vórtice
-            params.vortexEnabled.value = 1;
-            params.vortexStrength.value = 4.0;
-            break;
-    }
-
-    resetSimulation();
-}
-
-// ============================================================
-// 4. EVENTOS DE TECLADO (INTERACCIÓN EN VIVO Y PERFORMANCE)
-// ============================================================
-
-// Interacción con la Barra Espaciadora (Atracción <-> Repulsión)
-window.addEventListener('keydown', (e) => {
-    // Tecla P: Alternar modo LAB / PERFORMANCE
-    if (e.key === 'p' || e.key === 'P') {
-        toggleMode();
-    }
-
-    // Tecla R: Reiniciar posiciones
-    if (e.key === 'r' || e.key === 'R') {
-        resetSimulation();
-    }
-
-    // Barra Espaciadora: Inversión Radial (Explosión)
-    if (e.code === 'Space') {
-        e.preventDefault(); // Evita el scroll de la página
-
-        if (!e.repeat) {
-            // Guardar valor actual para restaurarlo al soltar
-            previousRadialStrength = params.radialStrength.value;
-            params.radialStrength.value = 15.0; // Fuerza de repulsión/onda expansiva
-            params.radialEnabled.value = 1;
-
-            labPanel.refresh();
-        }
-    }
-});
-
-window.addEventListener('keyup', (e) => {
-    if (e.code === 'Space') {
-        e.preventDefault();
-
-        // Restaurar el estado previo de fuerza radial
-        params.radialStrength.value = previousRadialStrength;
-
-        labPanel.refresh();
-    }
-});
-
-// Forzar visibilidad inicial del panel en modo LAB
-labPanel.setVisible(true);
+main().catch(console.error);
