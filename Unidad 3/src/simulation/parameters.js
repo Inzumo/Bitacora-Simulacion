@@ -1,54 +1,76 @@
+import * as THREE from 'three';
+
 export function createParameters() {
   return {
-    timeScale: 1.0,
-    maxSpeed: 5.0,
-    particleSize: 0.15,
-    damping: 0.98,
-    
-    radialEnabled: 1.0,
-    radialStrength: 0.5,
-    vortexEnabled: 0.0,
-    vortexStrength: 1.0,
-    curlEnabled: 0.0,
-    curlStrength: 0.5,
-    dragEnabled: 0.0,
-    
-    attractor: [0, 0, 0],
-    currentCenter: [0, 0, 0],
-    wind: [0, 0, 0],
-    bounds: [5, 5, 5]
+    initialSpeed: { value: 0.5 },
+    particleSize: { value: 0.15 },
+    timeStep: { value: 0.016 },
+    maxSpeed: { value: 5.0 },
+
+    // Corriente Local
+    currentCenter: { value: new THREE.Vector3(0, 0, 0) },
+    currentDirection: { value: new THREE.Vector3(1, 0, 0) },
+    currentStrength: { value: 0.0 },
+    currentRadius: { value: 2.0 },
+    currentEnabled: { value: 0.0 },
+
+    // Drag / Fricción
+    dragCoefficient: { value: 0.02 },
+    dragEnabled: { value: 1.0 },
+
+    // Fuerza Radial
+    radialStrength: { value: 1.5 },
+    radialEnabled: { value: 1.0 },
+    radialSoftness: { value: 0.5 },
+
+    // Vórtice
+    vortexStrength: { value: 1.0 },
+    vortexEnabled: { value: 0.0 },
+    vortexSoftness: { value: 0.5 },
+
+    // Viento
+    wind: { value: new THREE.Vector3(0, 0, 0) },
+    windEnabled: { value: 0.0 },
+
+    // Turbulencia / Curl
+    curlEnabled: { value: 0.0 },
+    curlStrength: { value: 0.5 },
+    noiseScale: { value: 1.0 },
+    noiseSpeed: { value: 0.5 },
+
+    // Límites de la caja
+    bounds: { value: new THREE.Vector3(5, 5, 5) }
   };
 }
 
-export function updateParametersSmoothly(params, lerpFactor = 0.05) {
-  // Aplicación directa sin interpolaciones
+export function updateParametersSmoothly() {
+  // Función reservada para interpolación fluida si se requiere
 }
 
 export const presets = {
-  preset1: (params) => {
-    params.damping = 0.99;
-    params.maxSpeed = 8.0;
-    params.radialStrength = 0.0;
+  preset1: (p) => {
+    p.radialEnabled.value = 1.0;
+    p.radialStrength.value = 0.0;
+    p.vortexEnabled.value = 0.0;
   },
-  preset2: (params) => {
-    params.damping = 0.95;
-    params.maxSpeed = 4.0;
-    params.radialStrength = 0.2;
-    params.wind = [1.5, 0.0, 0.0];
+  preset2: (p) => {
+    p.radialEnabled.value = 0.0;
+    p.windEnabled.value = 1.0;
+    p.wind.value.set(1.5, 0, 0);
   },
-  preset3: (params) => {
-    params.damping = 0.97;
-    params.maxSpeed = 6.0;
-    params.radialStrength = 2.0;
+  preset3: (p) => {
+    p.radialEnabled.value = 1.0;
+    p.radialStrength.value = 2.0;
+    p.vortexEnabled.value = 0.0;
   },
-  preset4: (params) => {
-    params.damping = 0.97;
-    params.maxSpeed = 6.0;
-    params.radialStrength = -2.0;
+  preset4: (p) => {
+    p.radialEnabled.value = 1.0;
+    p.radialStrength.value = -2.0;
+    p.vortexEnabled.value = 0.0;
   },
-  preset5: (params) => {
-    params.damping = 0.98;
-    params.maxSpeed = 10.0;
-    params.radialStrength = 1.0;
+  preset5: (p) => {
+    p.radialEnabled.value = 1.0;
+    p.vortexEnabled.value = 1.0;
+    p.vortexStrength.value = 1.5;
   }
 };
