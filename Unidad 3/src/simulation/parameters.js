@@ -44,7 +44,7 @@ export function createParameters() {
 }
 
 export function updateParametersSmoothly() {
-  // Función reservada para interpolación fluida si se requiere
+  // Interpolación auxiliar si se requiere
 }
 
 export const presets = {
