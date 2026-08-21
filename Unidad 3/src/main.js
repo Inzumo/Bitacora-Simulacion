@@ -60,9 +60,11 @@ async function main() {
 
     if (raycaster.ray.intersectPlane(interactionPlane, hit)) {
       if (params.currentCenter) {
-        params.targets.currentCenter.copy(hit);
+        if (params.currentCenter.copy) params.currentCenter.copy(hit);
+        else params.currentCenter = [hit.x, hit.y, hit.z];
       } else if (params.attractor) {
-        params.targets.attractor.copy(hit);
+        if (params.attractor.copy) params.attractor.copy(hit);
+        else params.attractor = [hit.x, hit.y, hit.z];
       }
       attractorHelper.position.copy(hit);
     }
@@ -71,8 +73,8 @@ async function main() {
   let paused = false;
   let mode = 'LAB';
   let panel;
-  let savedRadialStrength = params.targets.radialStrength;
-  let savedRadialEnabled = params.targets.radialEnabled;
+  let savedRadialStrength = params.radialStrength;
+  let savedRadialEnabled = params.radialEnabled;
 
   const applyPreset = (id) => {
     if (id === 'inertia' || id === 'preset1') presets.preset1(params);
@@ -123,17 +125,17 @@ async function main() {
 
     if (event.code === 'Space') {
       event.preventDefault();
-      savedRadialStrength = params.targets.radialStrength;
-      savedRadialEnabled = params.targets.radialEnabled;
-      params.targets.radialEnabled = 1;
-      params.targets.radialStrength = -(savedRadialStrength || 2.0);
+      savedRadialStrength = params.radialStrength;
+      savedRadialEnabled = params.radialEnabled;
+      params.radialEnabled = 1;
+      params.radialStrength = -(savedRadialStrength || 2.0);
     }
   });
 
   window.addEventListener('keyup', (event) => {
     if (event.code === 'Space') {
-      params.targets.radialEnabled = savedRadialEnabled;
-      params.targets.radialStrength = savedRadialStrength;
+      params.radialEnabled = savedRadialEnabled;
+      params.radialStrength = savedRadialStrength;
     }
   });
 
@@ -145,7 +147,7 @@ async function main() {
 
   simulation.reset();
 
-  // FRAME LOOP ORIGINAL
+  // FRAME LOOP
   renderer.setAnimationLoop(() => {
     updateParametersSmoothly(params, 0.05);
 
