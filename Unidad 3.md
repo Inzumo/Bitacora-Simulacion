@@ -6,7 +6,7 @@ El objetivo fue encontrar la tensión expresiva del instrumento. En lugar de aju
 
 ## Tabla de Criterios
 
-| Criterio | Peso | Valoración | Sustentación / Evidencias |
+| Criterio | Peso | Valoración | Qué debe demostrar la evidencia  |
 | :--- | :---: | :---: | :--- |
 | **Trazabilidad y comprensión del sistema.** | **25** | **25** | Puedo señalar y explicar estado, fuerzas, integración, render y controles; además puedo ubicar qué partes produjo o modificó la IA. |
 | **Verificación del algoritmo de fuerzas** | **25** | **25** | Estudié en detalle el proyecto y aunque no comprenda toda la sintaxis, puedo identificar su arquitectura, sus partes, puedo aislar una fuerza central, formular una predicción, la ejecuté ya analicé, comparé el resultado, cambié deliberadamente un signo o parámetro y expliqué la diferencia. |
