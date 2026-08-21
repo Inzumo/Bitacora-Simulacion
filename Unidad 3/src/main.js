@@ -19,8 +19,8 @@ async function main() {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color('#050607');
 
-  const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.05, 100);
-  camera.position.set(0, 0, 11);
+  const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
+  camera.position.set(0, 0, 10);
 
   const renderer = new THREE.WebGPURenderer({ antialias: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -33,13 +33,17 @@ async function main() {
   orbit.enableDamping = true;
 
   const params = createParameters();
+  
+  // Tamaño óptimo para renderizado de Points
+  params.particleSize.value = 2.5;
+
   const simulation = createSimulation({ renderer, scene, params, count: PARTICLE_COUNT });
 
-  const axes = new THREE.AxesHelper(1.5);
+  const axes = new THREE.AxesHelper(2);
   scene.add(axes);
 
-  // Inicializar partículas en la GPU
-  simulation.reset();
+  // Inicializar buffers GPU asíncronamente
+  await simulation.reset();
 
   let paused = false;
 
@@ -61,12 +65,12 @@ async function main() {
     renderer.setSize(window.innerWidth, window.innerHeight);
   });
 
-  renderer.setAnimationLoop(() => {
+  renderer.setAnimationLoop(async () => {
     if (!paused) {
-      simulation.stepSimulation();
+      await simulation.stepSimulation();
     }
     orbit.update();
-    renderer.render(scene, camera);
+    await renderer.renderAsync(scene, camera);
   });
 }
 
