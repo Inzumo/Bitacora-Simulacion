@@ -35,8 +35,10 @@ jobs:
       - name: Install
         run: npm install
 
-      - name: Build
-        run: npm run build
+      - name: Fix permissions & Build
+        run: |
+          chmod -R +x node_modules/.bin
+          npm run build
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
