@@ -820,5 +820,3 @@ export function createSimulation({
         }
     };
 }
-    };
-}
