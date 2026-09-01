@@ -11,7 +11,6 @@ import {
   smoothstep,
   mix,
   add,
-  mul,
   sub,
   negate,
   normalize,
@@ -25,32 +24,46 @@ export function createSimulation({ renderer, scene, params, count }) {
   const positionBuffer = instancedArray(count, 'vec3');
   const velocityBuffer = instancedArray(count, 'vec3');
 
-  // Declarar Uniforms pasando directamente las referencias de .value
-  const uInitialSpeed = uniform(params.initialSpeed.value);
-  const uMaxSpeed = uniform(params.maxSpeed.value);
-  const uTimeStep = uniform(params.timeStep.value);
-  const uBounds = uniform(params.bounds.value);
+  // -----------------------------------------------------------------
+  // 2. UNIFORMS DECLARADOS CON TIPOS EXPLÍCITOS PARA TSL
+  // -----------------------------------------------------------------
+  const uInitialSpeed = uniform(params.initialSpeed.value, 'float');
+  const uMaxSpeed = uniform(params.maxSpeed.value, 'float');
+  const uTimeStep = uniform(params.timeStep.value, 'float');
+  const uBounds = uniform(params.bounds.value, 'vec3');
+  const uParticleSize = uniform(params.particleSize.value, 'float');
 
-  const uCurrentCenter = uniform(params.currentCenter.value);
+  // Corriente Local
+  const uCurrentCenter = uniform(params.currentCenter.value, 'vec3');
+  const uCurrentDirection = uniform(params.currentDirection.value, 'vec3');
+  const uCurrentStrength = uniform(params.currentStrength.value, 'float');
+  const uCurrentRadius = uniform(params.currentRadius.value, 'float');
+  const uCurrentEnabled = uniform(params.currentEnabled.value, 'float');
 
-  const uWind = uniform(params.wind.value);
-  const uWindEnabled = uniform(params.windEnabled.value);
+  // Viento
+  const uWind = uniform(params.wind.value, 'vec3');
+  const uWindEnabled = uniform(params.windEnabled.value, 'float');
 
-  const uRadialStrength = uniform(params.radialStrength.value);
-  const uRadialEnabled = uniform(params.radialEnabled.value);
-  const uRadialSoftness = uniform(params.radialSoftness.value);
+  // Radial
+  const uRadialStrength = uniform(params.radialStrength.value, 'float');
+  const uRadialEnabled = uniform(params.radialEnabled.value, 'float');
+  const uRadialSoftness = uniform(params.radialSoftness.value, 'float');
 
-  const uVortexStrength = uniform(params.vortexStrength.value);
-  const uVortexEnabled = uniform(params.vortexEnabled.value);
-  const uVortexSoftness = uniform(params.vortexSoftness.value);
+  // Vórtice
+  const uVortexStrength = uniform(params.vortexStrength.value, 'float');
+  const uVortexEnabled = uniform(params.vortexEnabled.value, 'float');
+  const uVortexSoftness = uniform(params.vortexSoftness.value, 'float');
 
-  const uDragCoefficient = uniform(params.dragCoefficient.value);
-  const uDragEnabled = uniform(params.dragEnabled.value);
+  // Drag
+  const uDragCoefficient = uniform(params.dragCoefficient.value, 'float');
+  const uDragEnabled = uniform(params.dragEnabled.value, 'float');
 
-  const uParticleSize = uniform(params.particleSize.value);
+  // Curl
+  const uCurlEnabled = uniform(params.curlEnabled.value, 'float');
+  const uCurlStrength = uniform(params.curlStrength.value, 'float');
 
   // -----------------------------------------------------------------
-  // 2. HELPER HASH (GPU)
+  // 3. HELPER HASH (GPU)
   // -----------------------------------------------------------------
   const gpuHash = (idx) => {
     const fIdx = float(idx);
@@ -60,7 +73,7 @@ export function createSimulation({ renderer, scene, params, count }) {
   };
 
   // -----------------------------------------------------------------
-  // 3. INIT COMPUTE SHADER
+  // 4. INIT COMPUTE SHADER
   // -----------------------------------------------------------------
   const initCompute = Fn(() => {
     const p = positionBuffer.element(instanceIndex);
@@ -81,7 +94,7 @@ export function createSimulation({ renderer, scene, params, count }) {
   })().compute(count);
 
   // -----------------------------------------------------------------
-  // 4. STEP COMPUTE SHADER (FÍSICA)
+  // 5. STEP COMPUTE SHADER (FÍSICA)
   // -----------------------------------------------------------------
   const stepCompute = Fn(() => {
     const p = positionBuffer.element(instanceIndex);
@@ -89,7 +102,16 @@ export function createSimulation({ renderer, scene, params, count }) {
 
     let force = vec3(0.0);
 
-    // Viento
+    // Corriente Local
+    If(uCurrentEnabled.greaterThan(0.5), () => {
+      const dist = length(sub(p, uCurrentCenter));
+      If(dist.lessThan(uCurrentRadius), () => {
+        const falloff = float(1.0).sub(dist.div(uCurrentRadius));
+        force.addAssign(uCurrentDirection.mul(uCurrentStrength).mul(falloff));
+      });
+    });
+
+    // Viento Constante
     If(uWindEnabled.greaterThan(0.5), () => {
       force.addAssign(uWind);
     });
@@ -118,7 +140,7 @@ export function createSimulation({ renderer, scene, params, count }) {
       force.addAssign(negate(v).mul(uDragCoefficient));
     });
 
-    // Integración de movimiento
+    // Integración Euler
     v.addAssign(force.mul(uTimeStep));
 
     // Límite de velocidad
@@ -145,7 +167,7 @@ export function createSimulation({ renderer, scene, params, count }) {
   })().compute(count);
 
   // -----------------------------------------------------------------
-  // 5. MATERIAL VISUAL
+  // 6. MATERIAL VISUAL
   // -----------------------------------------------------------------
   const material = new THREE.SpriteNodeMaterial({
     transparent: true,
@@ -159,9 +181,9 @@ export function createSimulation({ renderer, scene, params, count }) {
   const speed = length(vel);
   const normalizedSpeed = smoothstep(0.0, 5.0, speed);
 
-  const colorSlow = vec3(0.0, 0.4, 1.0);  // Azul eléctrico
-  const colorMid = vec3(0.8, 0.1, 0.9);   // Magenta
-  const colorFast = vec3(1.0, 0.4, 0.1);  // Naranja fuego
+  const colorSlow = vec3(0.0, 0.4, 1.0);
+  const colorMid = vec3(0.8, 0.1, 0.9);
+  const colorFast = vec3(1.0, 0.4, 0.1);
 
   const finalColor = mix(
     mix(colorSlow, colorMid, normalizedSpeed.mul(1.5)),
@@ -173,7 +195,7 @@ export function createSimulation({ renderer, scene, params, count }) {
   material.scaleNode = uParticleSize.mul(add(1.0, normalizedSpeed.mul(0.6)));
 
   // -----------------------------------------------------------------
-  // 6. MESH INSTANCIADO
+  // 7. MESH INSTANCIADO
   // -----------------------------------------------------------------
   const geometry = new THREE.PlaneGeometry(1, 1);
   const mesh = new THREE.InstancedMesh(geometry, material, count);
@@ -185,7 +207,12 @@ export function createSimulation({ renderer, scene, params, count }) {
       uMaxSpeed,
       uTimeStep,
       uBounds,
+      uParticleSize,
       uCurrentCenter,
+      uCurrentDirection,
+      uCurrentStrength,
+      uCurrentRadius,
+      uCurrentEnabled,
       uWind,
       uWindEnabled,
       uRadialStrength,
@@ -196,7 +223,8 @@ export function createSimulation({ renderer, scene, params, count }) {
       uVortexSoftness,
       uDragCoefficient,
       uDragEnabled,
-      uParticleSize
+      uCurlEnabled,
+      uCurlStrength
     },
     reset() {
       renderer.compute(initCompute);
