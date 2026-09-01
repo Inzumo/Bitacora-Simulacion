@@ -165,6 +165,7 @@ async function main() {
     }
 
     updateHUD();
+    panel.refresh();
   };
 
   // ============================================================
@@ -246,8 +247,12 @@ async function main() {
       .join('') + `<span style="opacity:0.4; margin-left:8px;">| P: Modo | R: Reset</span>`;
   };
 
+  // ============================================================
+  // CREACIÓN DEL PANEL (PASANDO UNIFORMS)
+  // ============================================================
   const panel = createLabPanel({
     params,
+    uniforms,
     onReset: () => simulation.reset(),
     onPreset: applyPreset,
     onModeChange: () => setMode(mode === 'LAB' ? 'PERFORMANCE' : 'LAB'),
