@@ -53,7 +53,7 @@ async function main() {
   orbit.target.set(0, 0, 0);
 
   // ============================================================
-  // PARÁMETROS & TARGETS PARA LERP (INERCIA CONTINUA)
+  // PARÁMETROS & TARGETS PARA LERP
   // ============================================================
   const params = createParameters();
 
@@ -65,9 +65,7 @@ async function main() {
     vortexEnabled: params.vortexEnabled.value,
     vortexStrength: params.vortexStrength.value,
     dragEnabled: params.dragEnabled.value,
-    dragCoefficient: params.dragCoefficient.value,
-    curlEnabled: params.curlEnabled.value,
-    curlStrength: params.curlStrength.value
+    dragCoefficient: params.dragCoefficient.value
   };
 
   const simulation = createSimulation({
@@ -76,6 +74,8 @@ async function main() {
     params,
     count: PARTICLE_COUNT
   });
+
+  const { uniforms } = simulation;
 
   // ============================================================
   // ELEMENTOS DE INTERFAZ & GUÍAS
@@ -105,6 +105,7 @@ async function main() {
 
     if (raycaster.ray.intersectPlane(interactionPlane, hit)) {
       params.currentCenter.value.copy(hit);
+      uniforms.uCurrentCenter.value.copy(hit);
       attractorHelper.position.copy(hit);
     }
   });
@@ -114,7 +115,7 @@ async function main() {
   let activePreset = '1';
 
   // ============================================================
-  // PRESETS EN TIEMPO REAL (SIN RESETEAR POSICIONES)
+  // PRESETS EN TIEMPO REAL
   // ============================================================
   const applyPreset = (id) => {
     paused = false;
@@ -123,7 +124,6 @@ async function main() {
     targets.windEnabled = 0.0;
     targets.radialEnabled = 0.0;
     targets.vortexEnabled = 0.0;
-    targets.curlEnabled = 0.0;
     targets.dragEnabled = 1.0;
     targets.dragCoefficient = 0.05;
 
@@ -172,23 +172,32 @@ async function main() {
   // ============================================================
   const updateInertia = (factor = 0.08) => {
     params.windEnabled.value = THREE.MathUtils.lerp(params.windEnabled.value, targets.windEnabled, factor);
+    uniforms.uWindEnabled.value = params.windEnabled.value;
+
     params.wind.value.lerp(targets.wind, factor);
+    uniforms.uWind.value.copy(params.wind.value);
 
     params.radialEnabled.value = THREE.MathUtils.lerp(params.radialEnabled.value, targets.radialEnabled, factor);
+    uniforms.uRadialEnabled.value = params.radialEnabled.value;
+
     params.radialStrength.value = THREE.MathUtils.lerp(params.radialStrength.value, targets.radialStrength, factor);
+    uniforms.uRadialStrength.value = params.radialStrength.value;
 
     params.vortexEnabled.value = THREE.MathUtils.lerp(params.vortexEnabled.value, targets.vortexEnabled, factor);
+    uniforms.uVortexEnabled.value = params.vortexEnabled.value;
+
     params.vortexStrength.value = THREE.MathUtils.lerp(params.vortexStrength.value, targets.vortexStrength, factor);
+    uniforms.uVortexStrength.value = params.vortexStrength.value;
 
     params.dragEnabled.value = THREE.MathUtils.lerp(params.dragEnabled.value, targets.dragEnabled, factor);
-    params.dragCoefficient.value = THREE.MathUtils.lerp(params.dragCoefficient.value, targets.dragCoefficient, factor);
+    uniforms.uDragEnabled.value = params.dragEnabled.value;
 
-    params.curlEnabled.value = THREE.MathUtils.lerp(params.curlEnabled.value, targets.curlEnabled, factor);
-    params.curlStrength.value = THREE.MathUtils.lerp(params.curlStrength.value, targets.curlStrength, factor);
+    params.dragCoefficient.value = THREE.MathUtils.lerp(params.dragCoefficient.value, targets.dragCoefficient, factor);
+    uniforms.uDragCoefficient.value = params.dragCoefficient.value;
   };
 
   // ============================================================
-  // UI Y HUD
+  // HUD EN VIVO
   // ============================================================
   const hud = document.createElement('div');
   hud.style.cssText = `
@@ -287,7 +296,7 @@ async function main() {
   simulation.reset();
 
   // ============================================================
-  // RENDER LOOP
+  // LOOP PRINCIPAL
   // ============================================================
   renderer.setAnimationLoop(() => {
     if (!paused) {
