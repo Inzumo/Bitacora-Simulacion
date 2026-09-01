@@ -248,7 +248,7 @@ async function main() {
   };
 
   // ============================================================
-  // CREACIÓN DEL PANEL (PASANDO UNIFORMS)
+  // PANEL LAB
   // ============================================================
   const panel = createLabPanel({
     params,
