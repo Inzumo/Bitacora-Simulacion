@@ -1,11 +1,11 @@
 export function createLabPanel({
     params,
+    uniforms,
     onReset,
     onPreset,
     onModeChange,
     onPauseChange
 }) {
-    // 1. Inyectar estilos CSS automáticos para no depender de main.css ni style.css
     if (!document.getElementById('lab-panel-styles')) {
         const style = document.createElement('style');
         style.id = 'lab-panel-styles';
@@ -117,14 +117,11 @@ export function createLabPanel({
         document.head.appendChild(style);
     }
 
-    // 2. Crear estructura DOM del panel
     const panel = document.createElement('div');
     panel.className = 'lab-panel';
 
     panel.innerHTML = `
-        <div class="panel-title">
-            U3 · FORCES INSTRUMENT
-        </div>
+        <div class="panel-title">U3 · FORCES INSTRUMENT</div>
 
         <div class="panel-subtitle">
             LAB: aísla fuerzas, predice y prueba.<br>
@@ -137,7 +134,6 @@ export function createLabPanel({
             <button id="resetButton">Reiniciar (R)</button>
         </div>
 
-        <!-- CONTROLES MODO LAB (PRESETS) -->
         <div id="labControls">
             <div class="section-title">PRUEBAS DE COMPORTAMIENTO</div>
             <button data-preset="1">1 · Inercia</button>
@@ -147,9 +143,7 @@ export function createLabPanel({
             <button data-preset="5">5 · Vórtice</button>
         </div>
 
-        <!-- CONTROLES DE PARAMETROS Y FUERZAS -->
         <div id="performanceControls">
-
             <div class="section-title">SIMULACIÓN</div>
             <label>
                 Time Scale: <span id="timeScaleValue"></span>
@@ -158,37 +152,34 @@ export function createLabPanel({
 
             <label>
                 Max Speed: <span id="maxSpeedValue"></span>
-                <input id="maxSpeed" type="range" min="1" max="20" step="0.1" value="${params.maxSpeed?.value || 5.0}">
+                <input id="maxSpeed" type="range" min="1" max="20" step="0.1" value="${params.maxSpeed?.value || 10.0}">
             </label>
 
             <label>
                 Particle Size: <span id="particleSizeValue"></span>
-                <input id="particleSize" type="range" min="0.005" max="0.1" step="0.001" value="${params.particleSize?.value || 0.035}">
+                <input id="particleSize" type="range" min="0.005" max="0.2" step="0.001" value="${params.particleSize?.value || 0.08}">
             </label>
 
             <div class="section-title">FUERZAS</div>
 
-            <!-- RADIAL -->
             <div class="checkbox-row">
                 <input id="radialEnabled" type="checkbox">
                 <label for="radialEnabled">Fuerza Radial</label>
             </div>
             <label>
                 Radial Strength: <span id="radialStrengthValue"></span>
-                <input id="radialStrength" type="range" min="-20" max="20" step="0.1" value="${params.radialStrength?.value || -3.0}">
+                <input id="radialStrength" type="range" min="-20" max="20" step="0.1" value="${params.radialStrength?.value || 2.0}">
             </label>
 
-            <!-- VÓRTICE -->
             <div class="checkbox-row">
                 <input id="vortexEnabled" type="checkbox">
                 <label for="vortexEnabled">Vórtice</label>
             </div>
             <label>
                 Vortex Strength: <span id="vortexStrengthValue"></span>
-                <input id="vortexStrength" type="range" min="-10" max="10" step="0.1" value="${params.vortexStrength?.value || 3.0}">
+                <input id="vortexStrength" type="range" min="-10" max="10" step="0.1" value="${params.vortexStrength?.value || 2.0}">
             </label>
 
-            <!-- TURBULENCIA / RUIDO ARMÓNICO -->
             <div class="checkbox-row">
                 <input id="curlEnabled" type="checkbox">
                 <label for="curlEnabled">Turbulencia</label>
@@ -198,17 +189,15 @@ export function createLabPanel({
                 <input id="curlStrength" type="range" min="0" max="10" step="0.1" value="${params.curlStrength?.value || 0}">
             </label>
 
-            <!-- DRAG -->
             <div class="checkbox-row">
                 <input id="dragEnabled" type="checkbox">
                 <label for="dragEnabled">Drag</label>
             </div>
             <label>
                 Drag Coefficient: <span id="dragValue"></span>
-                <input id="dragCoefficient" type="range" min="0" max="0.5" step="0.01" value="${params.dragCoefficient?.value || 0.08}">
+                <input id="dragCoefficient" type="range" min="0" max="0.5" step="0.01" value="${params.dragCoefficient?.value || 0.05}">
             </label>
 
-            <!-- CORRIENTE / VIENTO -->
             <div class="checkbox-row">
                 <input id="windEnabled" type="checkbox">
                 <label for="windEnabled">Viento</label>
@@ -221,13 +210,11 @@ export function createLabPanel({
                 Wind Y: <span id="windYValue"></span>
                 <input id="windY" type="range" min="-5" max="5" step="0.1" value="${params.wind?.value?.y || 0}">
             </label>
-
         </div>
     `;
 
     document.body.appendChild(panel);
 
-    // 3. Selectores DOM
     const modeButton = panel.querySelector('#modeButton');
     const pauseButton = panel.querySelector('#pauseButton');
     const resetButton = panel.querySelector('#resetButton');
@@ -263,115 +250,163 @@ export function createLabPanel({
     const windXValue = panel.querySelector('#windXValue');
     const windYValue = panel.querySelector('#windYValue');
 
-    // 4. Refrescar datos
     function refresh() {
         if (params.timeStep) {
             timeScaleInput.value = params.timeStep.value;
             timeScaleValue.textContent = Number(params.timeStep.value).toFixed(3);
+            if (uniforms?.uTimeStep) uniforms.uTimeStep.value = params.timeStep.value;
         }
         if (params.maxSpeed) {
             maxSpeedInput.value = params.maxSpeed.value;
             maxSpeedValue.textContent = Number(params.maxSpeed.value).toFixed(1);
+            if (uniforms?.uMaxSpeed) uniforms.uMaxSpeed.value = params.maxSpeed.value;
         }
         if (params.particleSize) {
             particleSizeInput.value = params.particleSize.value;
             particleSizeValue.textContent = Number(params.particleSize.value).toFixed(3);
+            if (uniforms?.uParticleSize) uniforms.uParticleSize.value = params.particleSize.value;
         }
 
-        if (params.radialEnabled) radialEnabledInput.checked = Boolean(params.radialEnabled.value);
+        if (params.radialEnabled) {
+            radialEnabledInput.checked = Boolean(params.radialEnabled.value);
+            if (uniforms?.uRadialEnabled) uniforms.uRadialEnabled.value = params.radialEnabled.value;
+        }
         if (params.radialStrength) {
             radialStrengthInput.value = params.radialStrength.value;
             radialStrengthValue.textContent = Number(params.radialStrength.value).toFixed(2);
+            if (uniforms?.uRadialStrength) uniforms.uRadialStrength.value = params.radialStrength.value;
         }
 
-        if (params.vortexEnabled) vortexEnabledInput.checked = Boolean(params.vortexEnabled.value);
+        if (params.vortexEnabled) {
+            vortexEnabledInput.checked = Boolean(params.vortexEnabled.value);
+            if (uniforms?.uVortexEnabled) uniforms.uVortexEnabled.value = params.vortexEnabled.value;
+        }
         if (params.vortexStrength) {
             vortexStrengthInput.value = params.vortexStrength.value;
             vortexStrengthValue.textContent = Number(params.vortexStrength.value).toFixed(2);
+            if (uniforms?.uVortexStrength) uniforms.uVortexStrength.value = params.vortexStrength.value;
         }
 
-        if (params.curlEnabled) curlEnabledInput.checked = Boolean(params.curlEnabled.value);
+        if (params.curlEnabled) {
+            curlEnabledInput.checked = Boolean(params.curlEnabled.value);
+            if (uniforms?.uCurlEnabled) uniforms.uCurlEnabled.value = params.curlEnabled.value;
+        }
         if (params.curlStrength) {
             curlStrengthInput.value = params.curlStrength.value;
             curlStrengthValue.textContent = Number(params.curlStrength.value).toFixed(2);
+            if (uniforms?.uCurlStrength) uniforms.uCurlStrength.value = params.curlStrength.value;
         }
 
-        if (params.dragEnabled) dragEnabledInput.checked = Boolean(params.dragEnabled.value);
+        if (params.dragEnabled) {
+            dragEnabledInput.checked = Boolean(params.dragEnabled.value);
+            if (uniforms?.uDragEnabled) uniforms.uDragEnabled.value = params.dragEnabled.value;
+        }
         if (params.dragCoefficient) {
             dragInput.value = params.dragCoefficient.value;
             dragValue.textContent = Number(params.dragCoefficient.value).toFixed(2);
+            if (uniforms?.uDragCoefficient) uniforms.uDragCoefficient.value = params.dragCoefficient.value;
         }
 
-        if (params.windEnabled) windEnabledInput.checked = Boolean(params.windEnabled.value);
+        if (params.windEnabled) {
+            windEnabledInput.checked = Boolean(params.windEnabled.value);
+            if (uniforms?.uWindEnabled) uniforms.uWindEnabled.value = params.windEnabled.value;
+        }
         if (params.wind?.value) {
             windXInput.value = params.wind.value.x;
             windXValue.textContent = Number(params.wind.value.x).toFixed(2);
             windYInput.value = params.wind.value.y;
             windYValue.textContent = Number(params.wind.value.y).toFixed(2);
+            if (uniforms?.uWind) uniforms.uWind.value.copy(params.wind.value);
         }
     }
 
-    // 5. Listeners
     timeScaleInput.addEventListener('input', () => {
-        if (params.timeStep) params.timeStep.value = Number(timeScaleInput.value);
-        timeScaleValue.textContent = Number(timeScaleInput.value).toFixed(3);
+        const val = Number(timeScaleInput.value);
+        if (params.timeStep) params.timeStep.value = val;
+        if (uniforms?.uTimeStep) uniforms.uTimeStep.value = val;
+        timeScaleValue.textContent = val.toFixed(3);
     });
 
     maxSpeedInput.addEventListener('input', () => {
-        if (params.maxSpeed) params.maxSpeed.value = Number(maxSpeedInput.value);
-        maxSpeedValue.textContent = Number(maxSpeedInput.value).toFixed(1);
+        const val = Number(maxSpeedInput.value);
+        if (params.maxSpeed) params.maxSpeed.value = val;
+        if (uniforms?.uMaxSpeed) uniforms.uMaxSpeed.value = val;
+        maxSpeedValue.textContent = val.toFixed(1);
     });
 
     particleSizeInput.addEventListener('input', () => {
-        if (params.particleSize) params.particleSize.value = Number(particleSizeInput.value);
-        particleSizeValue.textContent = Number(particleSizeInput.value).toFixed(3);
+        const val = Number(particleSizeInput.value);
+        if (params.particleSize) params.particleSize.value = val;
+        if (uniforms?.uParticleSize) uniforms.uParticleSize.value = val;
+        particleSizeValue.textContent = val.toFixed(3);
     });
 
     radialEnabledInput.addEventListener('change', () => {
-        if (params.radialEnabled) params.radialEnabled.value = radialEnabledInput.checked ? 1 : 0;
+        const val = radialEnabledInput.checked ? 1.0 : 0.0;
+        if (params.radialEnabled) params.radialEnabled.value = val;
+        if (uniforms?.uRadialEnabled) uniforms.uRadialEnabled.value = val;
     });
     radialStrengthInput.addEventListener('input', () => {
-        if (params.radialStrength) params.radialStrength.value = Number(radialStrengthInput.value);
-        radialStrengthValue.textContent = Number(radialStrengthInput.value).toFixed(2);
+        const val = Number(radialStrengthInput.value);
+        if (params.radialStrength) params.radialStrength.value = val;
+        if (uniforms?.uRadialStrength) uniforms.uRadialStrength.value = val;
+        radialStrengthValue.textContent = val.toFixed(2);
     });
 
     vortexEnabledInput.addEventListener('change', () => {
-        if (params.vortexEnabled) params.vortexEnabled.value = vortexEnabledInput.checked ? 1 : 0;
+        const val = vortexEnabledInput.checked ? 1.0 : 0.0;
+        if (params.vortexEnabled) params.vortexEnabled.value = val;
+        if (uniforms?.uVortexEnabled) uniforms.uVortexEnabled.value = val;
     });
     vortexStrengthInput.addEventListener('input', () => {
-        if (params.vortexStrength) params.vortexStrength.value = Number(vortexStrengthInput.value);
-        vortexStrengthValue.textContent = Number(vortexStrengthInput.value).toFixed(2);
+        const val = Number(vortexStrengthInput.value);
+        if (params.vortexStrength) params.vortexStrength.value = val;
+        if (uniforms?.uVortexStrength) uniforms.uVortexStrength.value = val;
+        vortexStrengthValue.textContent = val.toFixed(2);
     });
 
     curlEnabledInput.addEventListener('change', () => {
-        if (params.curlEnabled) params.curlEnabled.value = curlEnabledInput.checked ? 1 : 0;
+        const val = curlEnabledInput.checked ? 1.0 : 0.0;
+        if (params.curlEnabled) params.curlEnabled.value = val;
+        if (uniforms?.uCurlEnabled) uniforms.uCurlEnabled.value = val;
     });
     curlStrengthInput.addEventListener('input', () => {
-        if (params.curlStrength) params.curlStrength.value = Number(curlStrengthInput.value);
-        curlStrengthValue.textContent = Number(curlStrengthInput.value).toFixed(2);
+        const val = Number(curlStrengthInput.value);
+        if (params.curlStrength) params.curlStrength.value = val;
+        if (uniforms?.uCurlStrength) uniforms.uCurlStrength.value = val;
+        curlStrengthValue.textContent = val.toFixed(2);
     });
 
     dragEnabledInput.addEventListener('change', () => {
-        if (params.dragEnabled) params.dragEnabled.value = dragEnabledInput.checked ? 1 : 0;
+        const val = dragEnabledInput.checked ? 1.0 : 0.0;
+        if (params.dragEnabled) params.dragEnabled.value = val;
+        if (uniforms?.uDragEnabled) uniforms.uDragEnabled.value = val;
     });
     dragInput.addEventListener('input', () => {
-        if (params.dragCoefficient) params.dragCoefficient.value = Number(dragInput.value);
-        dragValue.textContent = Number(dragInput.value).toFixed(2);
+        const val = Number(dragInput.value);
+        if (params.dragCoefficient) params.dragCoefficient.value = val;
+        if (uniforms?.uDragCoefficient) uniforms.uDragCoefficient.value = val;
+        dragValue.textContent = val.toFixed(2);
     });
 
     windEnabledInput.addEventListener('change', () => {
-        if (params.windEnabled) params.windEnabled.value = windEnabledInput.checked ? 1 : 0;
+        const val = windEnabledInput.checked ? 1.0 : 0.0;
+        if (params.windEnabled) params.windEnabled.value = val;
+        if (uniforms?.uWindEnabled) uniforms.uWindEnabled.value = val;
     });
     windXInput.addEventListener('input', () => {
-        if (params.wind?.value) params.wind.value.x = Number(windXInput.value);
-        windXValue.textContent = Number(windXInput.value).toFixed(2);
+        const val = Number(windXInput.value);
+        if (params.wind?.value) params.wind.value.x = val;
+        if (uniforms?.uWind) uniforms.uWind.value.x = val;
+        windXValue.textContent = val.toFixed(2);
     });
     windYInput.addEventListener('input', () => {
-        if (params.wind?.value) params.wind.value.y = Number(windYInput.value);
-        windYValue.textContent = Number(windYInput.value).toFixed(2);
+        const val = Number(windYInput.value);
+        if (params.wind?.value) params.wind.value.y = val;
+        if (uniforms?.uWind) uniforms.uWind.value.y = val;
+        windYValue.textContent = val.toFixed(2);
     });
 
-    // Presets
     panel.querySelectorAll('[data-preset]').forEach((button) => {
         button.addEventListener('click', () => {
             if (onPreset) onPreset(button.dataset.preset);
@@ -393,7 +428,6 @@ export function createLabPanel({
         refresh();
     });
 
-    // 6. Visibilidad de Modos
     function setVisible(visible) {
         if (visible) {
             panel.style.display = 'block';
