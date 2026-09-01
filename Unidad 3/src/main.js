@@ -120,7 +120,6 @@ async function main() {
     paused = false;
     activePreset = id;
 
-    // Reiniciar metas de activación
     targets.windEnabled = 0.0;
     targets.radialEnabled = 0.0;
     targets.vortexEnabled = 0.0;
