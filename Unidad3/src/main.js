@@ -539,7 +539,7 @@ main().catch((error) => {
   pre.textContent =
     String(
       error?.stack || error
-    );
+ );
 
-  document.body.appendChild(pre);
+document.body.appendChild(pre);
 });
