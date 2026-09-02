@@ -6,11 +6,11 @@ let simulation;
 
 async function init() {
   try {
-    // 1. Asegurar estilos básicos del Canvas en el DOM
+    // 1. Inyectar estilos básicos para asegurar visibilidad del Canvas
     const style = document.createElement('style');
     style.innerHTML = `
       * { margin: 0; padding: 0; box-sizing: border-box; }
-      html, body { width: 100%; height: 100%; overflow: hidden; background: #000; }
+      html, body { width: 100%; height: 100%; overflow: hidden; background: #050508; }
       canvas { display: block; width: 100vw; height: 100vh; }
     `;
     document.head.appendChild(style);
@@ -34,7 +34,7 @@ async function init() {
 
     // Inicializar WebGPU asincrónicamente
     await renderer.init();
-    console.log('WebGPU inicializado con éxito');
+    console.log('WebGPU inicializado correctamente');
 
     // 4. Parámetros de la simulación
     const params = {
@@ -62,21 +62,20 @@ async function init() {
       count: 10000
     });
 
-    // 6. Eventos de Teclado (Modos y Reset)
+    // 6. Controles de Teclado
     window.addEventListener('keydown', (e) => {
       const key = e.key.toLowerCase();
 
-      // Reset con la tecla R
+      // Reset
       if (key === 'r') {
         if (simulation && typeof simulation.reset === 'function') {
           simulation.reset();
         }
       }
 
-      // Modos de laboratorio (Teclas 1 a 5)
+      // Modos de laboratorio (1-5)
       if (['1', '2', '3', '4', '5'].includes(key)) {
-        // Desactivar todas las fuerzas primero
-        if (simulation.uniforms) {
+        if (simulation && simulation.uniforms) {
           simulation.uniforms.uWindEnabled.value = 0.0;
           simulation.uniforms.uRadialEnabled.value = 0.0;
           simulation.uniforms.uVortexEnabled.value = 0.0;
@@ -86,25 +85,25 @@ async function init() {
           case '1': // Inercia
             break;
           case '2': // Viento
-            if (simulation.uniforms) {
+            if (simulation?.uniforms) {
               simulation.uniforms.uWindEnabled.value = 1.0;
               simulation.uniforms.uWind.value.set(1.5, 0.5, 0.0);
             }
             break;
           case '3': // Atracción Radial
-            if (simulation.uniforms) {
+            if (simulation?.uniforms) {
               simulation.uniforms.uRadialEnabled.value = 1.0;
               simulation.uniforms.uRadialStrength.value = 3.0;
             }
             break;
           case '4': // Repulsión Radial
-            if (simulation.uniforms) {
+            if (simulation?.uniforms) {
               simulation.uniforms.uRadialEnabled.value = 1.0;
               simulation.uniforms.uRadialStrength.value = -3.0;
             }
             break;
           case '5': // Vórtice
-            if (simulation.uniforms) {
+            if (simulation?.uniforms) {
               simulation.uniforms.uVortexEnabled.value = 1.0;
               simulation.uniforms.uVortexStrength.value = 3.0;
             }
@@ -115,7 +114,7 @@ async function init() {
 
     window.addEventListener('resize', onWindowResize);
 
-    // 7. Bucle de render
+    // 7. Bucle de animación
     renderer.setAnimationLoop(animate);
 
   } catch (error) {
@@ -128,9 +127,8 @@ function animate() {
     simulation.stepSimulation();
   }
   
-  // En WebGPU se recomienda usar renderAsync para evitar bloqueos
   if (renderer && scene && camera) {
-    renderer.renderAsync(scene, camera);
+    renderer.render(scene, camera);
   }
 }
 
