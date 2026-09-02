@@ -11,12 +11,13 @@ import {
   length,
   normalize,
   cross,
-  clamp
-} from 'three/webgpu';
+  clamp,
+  instanceIndex
+} from 'three/tsl';
 
 export function createSimulation({ renderer, scene, params, count }) {
   // ============================================================
-  // UNIFORMS TSL DECLARADOS CON TIPO EXPLÍCITO (EVITA EL "Uniform null")
+  // UNIFORMS TSL DECLARADOS CON TIPO EXPLÍCITO
   // ============================================================
   const uTimeStep = uniform(params.timeStep?.value ?? 0.016, 'float');
   const uMaxSpeed = uniform(params.maxSpeed?.value ?? 10.0, 'float');
@@ -92,7 +93,7 @@ export function createSimulation({ renderer, scene, params, count }) {
 
     const force = vec3(0.0).toVar();
 
-    // Fuerza Radial (Atracción / Repulsión)
+    // Fuerza Radial
     const delta = uCurrentCenter.sub(pos);
     const dist = length(delta).max(0.1);
     const dir = delta.div(dist);
@@ -110,7 +111,7 @@ export function createSimulation({ renderer, scene, params, count }) {
     const windForce = uWind.mul(uWindEnabled);
     force.addAssign(windForce);
 
-    // Fuerza Drag (Resistencia)
+    // Fuerza Drag
     const dragForce = vel.mul(uDragCoefficient.negate()).mul(uDragEnabled);
     force.addAssign(dragForce);
 
@@ -130,7 +131,7 @@ export function createSimulation({ renderer, scene, params, count }) {
   const computeNode = computeUpdate().compute(count);
 
   // ============================================================
-  // MATERIAL DE PARTÍCULAS (RENDER SHADER)
+  // MATERIAL DE PARTÍCULAS
   // ============================================================
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute(
