@@ -57,10 +57,9 @@ async function main() {
 
   /// Muestra/actualiza la posición del arreglo de atractores con mayor separación
   const triggerRandomAttractors = () => {
-    // Aumentamos los rangos para que los focos se dispersen a lo largo del nuevo boundsSize
-    const rangeX = 9.0; // Antes 5.0
-    const rangeY = 7.0; // Antes 3.5
-    const rangeZ = 6.0; // Antes 3.0
+    const rangeX = 9.0;
+    const rangeY = 7.0;
+    const rangeZ = 6.0;
 
     const minDistance = 4.5; // Distancia mínima deseada entre focos
 
@@ -69,7 +68,6 @@ async function main() {
       let valid = false;
       let attempts = 0;
 
-      // Intentamos encontrar una posición que no esté pegada a los focos ya creados
       while (!valid && attempts < 15) {
         candidate.set(
           (Math.random() - 0.5) * rangeX,
@@ -138,7 +136,7 @@ async function main() {
     panel?.refresh();
   };
 
-const setMode = (next) => {
+  const setMode = (next) => {
     mode = next;
     const lab = mode === 'LAB';
     panel.setVisible(lab);
@@ -171,8 +169,7 @@ const setMode = (next) => {
   document.body.append(hud);
   setMode('LAB');
 
-  
-// PERFORMANCE INSTRUMENT -----------------------------------------------
+  // PERFORMANCE INSTRUMENT -----------------------------------------------
   const keys = {
     KeyW: false,
     KeyS: false,
@@ -182,8 +179,8 @@ const setMode = (next) => {
     KeyE: false,
     KeyZ: false,
     KeyX: false,
-    KeyF: false, // <--- Nueva tecla F (Aumentar)
-    KeyG: false  // <--- Nueva tecla G (Disminuir)
+    KeyF: false,
+    KeyG: false
   };
 
   const performanceBase = {
@@ -191,7 +188,7 @@ const setMode = (next) => {
     vortexStrength: 0.15,
     windX: 0.0,
     dragCoefficient: 0.22,
-    particleSize: 0.02 // <--- Tamaño base
+    particleSize: 0.02
   };
 
   const performanceRanges = {
@@ -200,8 +197,8 @@ const setMode = (next) => {
     windMax: 1.8,
     dragMin: 0.03,
     dragMax: 0.65,
-    sizeMin: 0.005, // <--- Tamaño mínimo
-    sizeMax: 0.12   // <--- Tamaño máximo
+    sizeMin: 0.005,
+    sizeMax: 0.12
   };
 
   const approach = (current, target, amount = 0.08) => {
@@ -273,7 +270,7 @@ const setMode = (next) => {
       0.06
     );
 
-    // 5. TAMAÑO DE PARTÍCULAS (Ajuste progresivo continuo)
+    // 5. TAMAÑO DE PARTÍCULAS
     if (keys.KeyF) {
       params.particleSize.value = Math.min(
         performanceRanges.sizeMax,
@@ -386,8 +383,4 @@ main().catch((error) => {
   pre.style.cssText = 'position:fixed;inset:16px;white-space:pre-wrap;color:#fff;z-index:50';
   pre.textContent = String(error?.stack || error);
   document.body.append(pre);
-<<<<<<< HEAD
 });
-=======
-});
->>>>>>> 3cac90b810a9d2f99e41bbe9cd5932030b100243

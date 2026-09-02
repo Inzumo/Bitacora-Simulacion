@@ -48,7 +48,7 @@ export function createSimulation({ renderer, scene, params, count = 300000 }) {
     // 1) VIENTO
     force.addAssign(params.wind.mul(params.windEnabled));
 
-    // 2) RADIAL MULTI-FOCO (5 ATRACTORES)
+    // 2) RADIAL MULTI-FOCO (8 ATRACTORES)
     const totalRadialForce = vec3(0.0).toVar();
 
     for (let i = 0; i < 8; i++) {
@@ -145,8 +145,4 @@ export function createSimulation({ renderer, scene, params, count = 300000 }) {
     stepSimulation,
     dispose
   };
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 3cac90b810a9d2f99e41bbe9cd5932030b100243
