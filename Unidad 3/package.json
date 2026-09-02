@@ -1,20 +1,17 @@
 {
-  "name": "unidad-3",
+  "name": "forces-instrument-u3",
   "version": "1.0.0",
-  "description": "",
+  "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build --base=/Bitacora-Simulacion/",
+    "build": "vite build",
     "preview": "vite preview"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
-    "three": "^0.185.1"
+    "three": "0.185.1"
   },
   "devDependencies": {
-    "vite": "^8.2.1"
+    "vite": "8.2.1"
   }
 }
