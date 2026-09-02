@@ -165,32 +165,28 @@ export function createSimulation({ renderer, scene, params, count }) {
       renderer.compute(computeNode);
     },
     reset: () => {
-      // Acceso directo a los atributos de buffer subyacentes
-      const posAttr = positionBuffer.value || positionBuffer.attribute || positionBuffer;
-      const velAttr = velocityBuffer.value || velocityBuffer.attribute || velocityBuffer;
-
-      const posArray = posAttr.array || posAttr.buffer?.array;
-      const velArray = velAttr.array || velAttr.buffer?.array;
-
-      if (!posArray || !velArray) return;
-
+      // Reescritura directa sobre los TypedArrays del closure
       for (let i = 0; i < count; i++) {
         const i3 = i * 3;
         const radius = 2.0 * Math.sqrt(Math.random());
         const theta = Math.random() * Math.PI * 2;
         const phi = Math.acos(2 * Math.random() - 1);
 
-        posArray[i3] = radius * Math.sin(phi) * Math.cos(theta);
-        posArray[i3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
-        posArray[i3 + 2] = radius * Math.cos(phi);
+        positionArray[i3] = radius * Math.sin(phi) * Math.cos(theta);
+        positionArray[i3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+        positionArray[i3 + 2] = radius * Math.cos(phi);
 
-        velArray[i3] = (Math.random() - 0.5) * 0.1;
-        velArray[i3 + 1] = (Math.random() - 0.5) * 0.1;
-        velArray[i3 + 2] = (Math.random() - 0.5) * 0.1;
+        velocityArray[i3] = (Math.random() - 0.5) * 0.1;
+        velocityArray[i3 + 1] = (Math.random() - 0.5) * 0.1;
+        velocityArray[i3 + 2] = (Math.random() - 0.5) * 0.1;
       }
 
-      posAttr.needsUpdate = true;
-      velAttr.needsUpdate = true;
+      // Notificar actualización al atributo de buffer correspondiente
+      const posAttr = positionBuffer.value || positionBuffer.attribute || positionBuffer.nodeAttribute;
+      const velAttr = velocityBuffer.value || velocityBuffer.attribute || velocityBuffer.nodeAttribute;
+
+      if (posAttr) posAttr.needsUpdate = true;
+      if (velAttr) velAttr.needsUpdate = true;
     }
   };
 }
