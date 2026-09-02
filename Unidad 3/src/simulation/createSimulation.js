@@ -2,10 +2,8 @@ import * as THREE from 'three/webgpu';
 import {
   uniform,
   instancedArray,
-  float,
   vec3,
   vec4,
-  compute,
   Fn,
   mix,
   length,
@@ -16,9 +14,7 @@ import {
 } from 'three/tsl';
 
 export function createSimulation({ renderer, scene, params, count }) {
-  // ============================================================
-  // UNIFORMS TSL DECLARADOS CON TIPO EXPLÍCITO
-  // ============================================================
+  // UNIFORMS
   const uTimeStep = uniform(params.timeStep?.value ?? 0.016, 'float');
   const uMaxSpeed = uniform(params.maxSpeed?.value ?? 10.0, 'float');
   const uParticleSize = uniform(params.particleSize?.value ?? 0.08, 'float');
@@ -28,9 +24,6 @@ export function createSimulation({ renderer, scene, params, count }) {
 
   const uVortexEnabled = uniform(params.vortexEnabled?.value ?? 0.0, 'float');
   const uVortexStrength = uniform(params.vortexStrength?.value ?? 2.0, 'float');
-
-  const uCurlEnabled = uniform(params.curlEnabled?.value ?? 0.0, 'float');
-  const uCurlStrength = uniform(params.curlStrength?.value ?? 0.0, 'float');
 
   const uDragEnabled = uniform(params.dragEnabled?.value ?? 1.0, 'float');
   const uDragCoefficient = uniform(params.dragCoefficient?.value ?? 0.05, 'float');
@@ -51,8 +44,6 @@ export function createSimulation({ renderer, scene, params, count }) {
     uRadialStrength,
     uVortexEnabled,
     uVortexStrength,
-    uCurlEnabled,
-    uCurlStrength,
     uDragEnabled,
     uDragCoefficient,
     uWindEnabled,
@@ -60,37 +51,36 @@ export function createSimulation({ renderer, scene, params, count }) {
     uCurrentCenter
   };
 
-  // ============================================================
-  // BUFFERS GPU
-  // ============================================================
+  // DATOS Y BUFFERS
   const positionArray = new Float32Array(count * 3);
   const velocityArray = new Float32Array(count * 3);
 
-  for (let i = 0; i < count; i++) {
-    const i3 = i * 3;
-    const radius = 2.0 * Math.sqrt(Math.random());
-    const theta = Math.random() * Math.PI * 2;
-    const phi = Math.acos(2 * Math.random() - 1);
+  const initData = () => {
+    for (let i = 0; i < count; i++) {
+      const i3 = i * 3;
+      const radius = 2.0 * Math.sqrt(Math.random());
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2 * Math.random() - 1);
 
-    positionArray[i3] = radius * Math.sin(phi) * Math.cos(theta);
-    positionArray[i3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
-    positionArray[i3 + 2] = radius * Math.cos(phi);
+      positionArray[i3] = radius * Math.sin(phi) * Math.cos(theta);
+      positionArray[i3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+      positionArray[i3 + 2] = radius * Math.cos(phi);
 
-    velocityArray[i3] = (Math.random() - 0.5) * 0.1;
-    velocityArray[i3 + 1] = (Math.random() - 0.5) * 0.1;
-    velocityArray[i3 + 2] = (Math.random() - 0.5) * 0.1;
-  }
+      velocityArray[i3] = (Math.random() - 0.5) * 0.1;
+      velocityArray[i3 + 1] = (Math.random() - 0.5) * 0.1;
+      velocityArray[i3 + 2] = (Math.random() - 0.5) * 0.1;
+    }
+  };
 
-  // Atributos de almacenamiento explícitos
+  initData();
+
   const posAttribute = new THREE.StorageInstancedBufferAttribute(positionArray, 3);
   const velAttribute = new THREE.StorageInstancedBufferAttribute(velocityArray, 3);
 
   const positionBuffer = instancedArray(posAttribute);
   const velocityBuffer = instancedArray(velAttribute);
 
-  // ============================================================
   // COMPUTE SHADER TSL
-  // ============================================================
   const computeUpdate = Fn(() => {
     const pos = positionBuffer.element(instanceIndex);
     const vel = velocityBuffer.element(instanceIndex);
@@ -119,24 +109,21 @@ export function createSimulation({ renderer, scene, params, count }) {
     const dragForce = vel.mul(uDragCoefficient.negate()).mul(uDragEnabled);
     force.addAssign(dragForce);
 
-    // Integración de Euler
+    // Integración Euler
     vel.addAssign(force.mul(uTimeStep));
 
-    // Limitar velocidad máxima
+    // Limitar velocidad
     const speed = length(vel);
     const overSpeed = speed.greaterThan(uMaxSpeed);
     const limitedVel = normalize(vel).mul(uMaxSpeed);
     vel.assign(mix(vel, limitedVel, overSpeed));
 
-    // Actualizar posición
     pos.addAssign(vel.mul(uTimeStep));
   });
 
   const computeNode = computeUpdate().compute(count);
 
-  // ============================================================
-  // MATERIAL DE PARTÍCULAS
-  // ============================================================
+  // MATERIAL
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute(
     'position',
@@ -169,23 +156,7 @@ export function createSimulation({ renderer, scene, params, count }) {
       renderer.compute(computeNode);
     },
     reset: () => {
-      // Modificar directamente la memoria de los arrays
-      for (let i = 0; i < count; i++) {
-        const i3 = i * 3;
-        const radius = 2.0 * Math.sqrt(Math.random());
-        const theta = Math.random() * Math.PI * 2;
-        const phi = Math.acos(2 * Math.random() - 1);
-
-        positionArray[i3] = radius * Math.sin(phi) * Math.cos(theta);
-        positionArray[i3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
-        positionArray[i3 + 2] = radius * Math.cos(phi);
-
-        velocityArray[i3] = (Math.random() - 0.5) * 0.1;
-        velocityArray[i3 + 1] = (Math.random() - 0.5) * 0.1;
-        velocityArray[i3 + 2] = (Math.random() - 0.5) * 0.1;
-      }
-
-      // Notificar a WebGPU que los atributos cambiaron
+      initData();
       posAttribute.needsUpdate = true;
       velAttribute.needsUpdate = true;
     }
