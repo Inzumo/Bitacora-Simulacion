@@ -165,8 +165,14 @@ export function createSimulation({ renderer, scene, params, count }) {
       renderer.compute(computeNode);
     },
     reset: () => {
-      const posAttr = positionBuffer.attribute;
-      const velAttr = velocityBuffer.attribute;
+      // Acceso directo a los atributos de buffer subyacentes
+      const posAttr = positionBuffer.value || positionBuffer.attribute || positionBuffer;
+      const velAttr = velocityBuffer.value || velocityBuffer.attribute || velocityBuffer;
+
+      const posArray = posAttr.array || posAttr.buffer?.array;
+      const velArray = velAttr.array || velAttr.buffer?.array;
+
+      if (!posArray || !velArray) return;
 
       for (let i = 0; i < count; i++) {
         const i3 = i * 3;
@@ -174,13 +180,13 @@ export function createSimulation({ renderer, scene, params, count }) {
         const theta = Math.random() * Math.PI * 2;
         const phi = Math.acos(2 * Math.random() - 1);
 
-        posAttr.array[i3] = radius * Math.sin(phi) * Math.cos(theta);
-        posAttr.array[i3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
-        posAttr.array[i3 + 2] = radius * Math.cos(phi);
+        posArray[i3] = radius * Math.sin(phi) * Math.cos(theta);
+        posArray[i3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+        posArray[i3 + 2] = radius * Math.cos(phi);
 
-        velAttr.array[i3] = (Math.random() - 0.5) * 0.1;
-        velAttr.array[i3 + 1] = (Math.random() - 0.5) * 0.1;
-        velAttr.array[i3 + 2] = (Math.random() - 0.5) * 0.1;
+        velArray[i3] = (Math.random() - 0.5) * 0.1;
+        velArray[i3 + 1] = (Math.random() - 0.5) * 0.1;
+        velArray[i3 + 2] = (Math.random() - 0.5) * 0.1;
       }
 
       posAttr.needsUpdate = true;
