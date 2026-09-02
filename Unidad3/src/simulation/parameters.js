@@ -1,42 +1,24 @@
-import * as THREE from 'three/webgpu';
+import * as THREE from 'three';
+import { uniform } from 'three/tsl';
 
 export function createParameters() {
-  return {
-    initialSpeed: { value: 0.5 },
-    maxSpeed: { value: 10.0 },
-    timeStep: { value: 0.016 },
-    bounds: { value: new THREE.Vector3(5.0, 5.0, 5.0) },
-    particleSize: { value: 0.08 },
-
-    // Corriente Local
-    currentCenter: { value: new THREE.Vector3(0, 0, 0) },
-    currentDirection: { value: new THREE.Vector3(1, 0, 0) },
-    currentStrength: { value: 2.0 },
-    currentRadius: { value: 2.0 },
-    currentEnabled: { value: 1.0 },
-
-    // Viento Constante
-    wind: { value: new THREE.Vector3(0, 0, 0) },
-    windEnabled: { value: 0.0 },
-
-    // Atracción / Repulsión Radial
-    radialStrength: { value: 2.0 },
-    radialEnabled: { value: 1.0 },
-    radialSoftness: { value: 0.5 },
-
-    // Vórtice
-    vortexStrength: { value: 2.0 },
-    vortexEnabled: { value: 0.0 },
-    vortexSoftness: { value: 0.5 },
-
-    // Ficción (Drag)
-    dragCoefficient: { value: 0.05 },
-    dragEnabled: { value: 1.0 },
-
-    // Curl Noise
-    curlEnabled: { value: 0.0 },
-    curlStrength: { value: 1.0 },
-    noiseScale: { value: 0.5 },
-    noiseSpeed: { value: 0.1 }
-  };
+  return {
+    // Definimos los 5 focos como uniforms independientes reconocibles por WGSL
+    attractors: Array.from({ length: 8 }, () => uniform(new THREE.Vector3())),
+    radialStrength: uniform(0.35),
+    radialEnabled: uniform(1),
+    vortexStrength: uniform(0.15),
+    vortexEnabled: uniform(1),
+    wind: uniform(new THREE.Vector3(0, 0, 0)),
+    windEnabled: uniform(1),
+    dragCoefficient: uniform(0.22),
+    dragEnabled: uniform(1),
+    initialSpeed: uniform(0.0),
+    particleSize: uniform(0.02),
+    boundsSize: uniform(12.0),
+    maxSpeed: uniform(8.0),
+    softening: uniform(0.2),
+    dt: uniform(0.016),
+    timeScale: uniform(1.0)
+  };
 }
