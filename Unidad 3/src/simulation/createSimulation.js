@@ -1,4 +1,6 @@
+
 import * as THREE from 'three/webgpu';
+
 import {
   uniform,
   instancedArray,
@@ -13,151 +15,494 @@ import {
   instanceIndex
 } from 'three/tsl';
 
-export function createSimulation({ renderer, scene, params, count }) {
+export function createSimulation({
+  renderer,
+  scene,
+  params,
+  count
+}) {
+
+  // ==================================================
   // UNIFORMS
-  const uTimeStep = uniform(params.timeStep?.value ?? 0.016, 'float');
-  const uMaxSpeed = uniform(params.maxSpeed?.value ?? 10.0, 'float');
-  const uParticleSize = uniform(params.particleSize?.value ?? 0.08, 'float');
+  // ==================================================
 
-  const uRadialEnabled = uniform(params.radialEnabled?.value ?? 0.0, 'float');
-  const uRadialStrength = uniform(params.radialStrength?.value ?? 2.0, 'float');
+  const uTimeStep = uniform(
+    params.timeStep?.value ?? 0.016,
+    'float'
+  );
 
-  const uVortexEnabled = uniform(params.vortexEnabled?.value ?? 0.0, 'float');
-  const uVortexStrength = uniform(params.vortexStrength?.value ?? 2.0, 'float');
+  const uMaxSpeed = uniform(
+    params.maxSpeed?.value ?? 10.0,
+    'float'
+  );
 
-  const uDragEnabled = uniform(params.dragEnabled?.value ?? 1.0, 'float');
-  const uDragCoefficient = uniform(params.dragCoefficient?.value ?? 0.05, 'float');
+  const uParticleSize = uniform(
+    params.particleSize?.value ?? 0.08,
+    'float'
+  );
 
-  const uWindEnabled = uniform(params.windEnabled?.value ?? 0.0, 'float');
-  const uWind = uniform(params.wind?.value || new THREE.Vector3(0, 0, 0), 'vec3');
+  const uRadialEnabled = uniform(
+    params.radialEnabled?.value ?? 0.0,
+    'float'
+  );
 
-  const uCurrentCenter = uniform(
-    params.currentCenter?.value || new THREE.Vector3(0, 0, 0),
+  const uRadialStrength = uniform(
+    params.radialStrength?.value ?? 2.0,
+    'float'
+  );
+
+  const uVortexEnabled = uniform(
+    params.vortexEnabled?.value ?? 0.0,
+    'float'
+  );
+
+  const uVortexStrength = uniform(
+    params.vortexStrength?.value ?? 2.0,
+    'float'
+  );
+
+  const uDragEnabled = uniform(
+    params.dragEnabled?.value ?? 1.0,
+    'float'
+  );
+
+  const uDragCoefficient = uniform(
+    params.dragCoefficient?.value ?? 0.05,
+    'float'
+  );
+
+  const uWindEnabled = uniform(
+    params.windEnabled?.value ?? 0.0,
+    'float'
+  );
+
+  const uWind = uniform(
+    params.wind?.value ??
+      new THREE.Vector3(0, 0, 0),
     'vec3'
   );
 
+  const uCurrentCenter = uniform(
+    params.currentCenter?.value ??
+      new THREE.Vector3(0, 0, 0),
+    'vec3'
+  );
+
+  // ==================================================
+  // OBJETO DE UNIFORMS
+  // ==================================================
+
   const uniforms = {
+
     uTimeStep,
+
     uMaxSpeed,
+
     uParticleSize,
+
     uRadialEnabled,
+
     uRadialStrength,
+
     uVortexEnabled,
+
     uVortexStrength,
+
     uDragEnabled,
+
     uDragCoefficient,
+
     uWindEnabled,
+
     uWind,
+
     uCurrentCenter
   };
 
-  // INSTANCED ARRAYS DE TSL (Buffer de almacenamiento GPU)
-  const positionBuffer = instancedArray(count, 'vec3');
-  const velocityBuffer = instancedArray(count, 'vec3');
+  // ==================================================
+  // BUFFERS GPU
+  // ==================================================
 
-  // Inicialización de partículas en la GPU
-  const positionArray = new Float32Array(count * 3);
-  const velocityArray = new Float32Array(count * 3);
+  const positionBuffer =
+    instancedArray(
+      count,
+      'vec3'
+    );
 
-  const initData = () => {
-    for (let i = 0; i < count; i++) {
+  const velocityBuffer =
+    instancedArray(
+      count,
+      'vec3'
+    );
+
+  // ==================================================
+  // DATOS INICIALES
+  // ==================================================
+
+  const positionArray =
+    new Float32Array(
+      count * 3
+    );
+
+  const velocityArray =
+    new Float32Array(
+      count * 3
+    );
+
+  function initData() {
+
+    for (
+      let i = 0;
+      i < count;
+      i++
+    ) {
+
       const i3 = i * 3;
-      const radius = 2.0 * Math.sqrt(Math.random());
-      const theta = Math.random() * Math.PI * 2;
-      const phi = Math.acos(2 * Math.random() - 1);
 
-      positionArray[i3] = radius * Math.sin(phi) * Math.cos(theta);
-      positionArray[i3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
-      positionArray[i3 + 2] = radius * Math.cos(phi);
+      // Distribución esférica
+      const radius =
+        2.0 *
+        Math.sqrt(
+          Math.random()
+        );
 
-      velocityArray[i3] = (Math.random() - 0.5) * 0.1;
-      velocityArray[i3 + 1] = (Math.random() - 0.5) * 0.1;
-      velocityArray[i3 + 2] = (Math.random() - 0.5) * 0.1;
+      const theta =
+        Math.random() *
+        Math.PI *
+        2;
+
+      const phi =
+        Math.acos(
+          2 *
+          Math.random() -
+          1
+        );
+
+      positionArray[i3] =
+        radius *
+        Math.sin(phi) *
+        Math.cos(theta);
+
+      positionArray[i3 + 1] =
+        radius *
+        Math.sin(phi) *
+        Math.sin(theta);
+
+      positionArray[i3 + 2] =
+        radius *
+        Math.cos(phi);
+
+      // Velocidad inicial pequeña
+      velocityArray[i3] =
+        (Math.random() - 0.5) *
+        0.1;
+
+      velocityArray[i3 + 1] =
+        (Math.random() - 0.5) *
+        0.1;
+
+      velocityArray[i3 + 2] =
+        (Math.random() - 0.5) *
+        0.1;
     }
-  };
+  }
 
   initData();
 
-  // Asignar los arrays iniciales a los buffers
-  positionBuffer.value.array.set(positionArray);
-  velocityBuffer.value.array.set(velocityArray);
+  // ==================================================
+  // COPIAR DATOS A GPU
+  // ==================================================
 
-  // COMPUTE SHADER TSL
+  positionBuffer.value.array.set(
+    positionArray
+  );
+
+  velocityBuffer.value.array.set(
+    velocityArray
+  );
+
+  // ==================================================
+  // COMPUTE SHADER
+  // ==================================================
+
   const computeUpdate = Fn(() => {
-    const pos = positionBuffer.element(instanceIndex);
-    const vel = velocityBuffer.element(instanceIndex);
 
-    const force = vec3(0.0).toVar();
+    const pos =
+      positionBuffer.element(
+        instanceIndex
+      );
 
-    // Fuerza Radial
-    const delta = uCurrentCenter.sub(pos);
-    const dist = length(delta).max(0.1);
-    const dir = delta.div(dist);
+    const vel =
+      velocityBuffer.element(
+        instanceIndex
+      );
 
-    const radialForce = dir.mul(uRadialStrength).mul(uRadialEnabled);
-    force.addAssign(radialForce);
+    const force =
+      vec3(0.0).toVar();
 
-    // Fuerza Vórtice
-    const up = vec3(0.0, 1.0, 0.0);
-    const vortexDir = cross(dir, up);
-    const vortexForce = vortexDir.mul(uVortexStrength).mul(uVortexEnabled);
-    force.addAssign(vortexForce);
+    // ================================================
+    // FUERZA RADIAL
+    // ================================================
 
-    // Fuerza Viento
-    const windForce = uWind.mul(uWindEnabled);
-    force.addAssign(windForce);
+    const delta =
+      uCurrentCenter.sub(
+        pos
+      );
 
-    // Fuerza Drag
-    const dragForce = vel.mul(uDragCoefficient.negate()).mul(uDragEnabled);
-    force.addAssign(dragForce);
+    const dist =
+      length(delta).max(
+        0.1
+      );
 
-    // Integración Euler
-    vel.addAssign(force.mul(uTimeStep));
+    const dir =
+      delta.div(dist);
 
-    // Limitar velocidad
-    const speed = length(vel);
-    const overSpeed = speed.greaterThan(uMaxSpeed);
-    const limitedVel = normalize(vel).mul(uMaxSpeed);
-    vel.assign(mix(vel, limitedVel, overSpeed));
+    const radialForce =
+      dir
+        .mul(uRadialStrength)
+        .mul(uRadialEnabled);
 
-    pos.addAssign(vel.mul(uTimeStep));
+    force.addAssign(
+      radialForce
+    );
+
+    // ================================================
+    // FUERZA VÓRTICE
+    // ================================================
+
+    const up =
+      vec3(
+        0.0,
+        1.0,
+        0.0
+      );
+
+    const vortexDir =
+      cross(
+        dir,
+        up
+      );
+
+    const vortexForce =
+      vortexDir
+        .mul(uVortexStrength)
+        .mul(uVortexEnabled);
+
+    force.addAssign(
+      vortexForce
+    );
+
+    // ================================================
+    // FUERZA VIENTO
+    // ================================================
+
+    const windForce =
+      uWind.mul(
+        uWindEnabled
+      );
+
+    force.addAssign(
+      windForce
+    );
+
+    // ================================================
+    // DRAG
+    // ================================================
+
+    const dragForce =
+      vel
+        .mul(
+          uDragCoefficient.negate()
+        )
+        .mul(
+          uDragEnabled
+        );
+
+    force.addAssign(
+      dragForce
+    );
+
+    // ================================================
+    // INTEGRACIÓN EULER
+    // ================================================
+
+    vel.addAssign(
+      force.mul(
+        uTimeStep
+      )
+    );
+
+    // ================================================
+    // LIMITAR VELOCIDAD
+    // ================================================
+
+    const speed =
+      length(vel);
+
+    const overSpeed =
+      speed.greaterThan(
+        uMaxSpeed
+      );
+
+    const limitedVel =
+      normalize(vel)
+        .mul(
+          uMaxSpeed
+        );
+
+    vel.assign(
+      mix(
+        vel,
+        limitedVel,
+        overSpeed
+      )
+    );
+
+    // ================================================
+    // ACTUALIZAR POSICIÓN
+    // ================================================
+
+    pos.addAssign(
+      vel.mul(
+        uTimeStep
+      )
+    );
   });
 
-  const computeNode = computeUpdate().compute(count);
+  const computeNode =
+    computeUpdate().compute(
+      count
+    );
 
-  // MATERIAL & MESH DE PARTÍCULAS
-  const particleMaterial = new THREE.SpriteNodeMaterial({
-    transparent: true,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false
-  });
+  // ==================================================
+  // MATERIAL
+  // ==================================================
 
-  // Vinculación correcta de attributos en TSL WebGPU
-  particleMaterial.positionNode = positionBuffer.toAttribute();
-  particleMaterial.scaleNode = uParticleSize;
+  const particleMaterial =
+    new THREE.SpriteNodeMaterial({
+      transparent: true,
 
-  const velNode = velocityBuffer.toAttribute();
-  const speedRatio = clamp(length(velNode).div(uMaxSpeed), 0.0, 1.0);
-  const colorSlow = vec3(0.1, 0.4, 1.0);
-  const colorFast = vec3(1.0, 0.2, 0.5);
+      blending:
+        THREE.AdditiveBlending,
 
-  particleMaterial.colorNode = vec4(mix(colorSlow, colorFast, speedRatio), 0.8);
+      depthWrite: false
+    });
 
-  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), particleMaterial);
-  mesh.count = count;
-  scene.add(mesh);
+  // ==================================================
+  // POSICIÓN DE LAS PARTÍCULAS
+  // ==================================================
+
+  particleMaterial.positionNode =
+    positionBuffer.toAttribute();
+
+  particleMaterial.scaleNode =
+    uParticleSize;
+
+  // ==================================================
+  // COLOR SEGÚN VELOCIDAD
+  // ==================================================
+
+  const velNode =
+    velocityBuffer.toAttribute();
+
+  const speedRatio =
+    clamp(
+      length(velNode).div(
+        uMaxSpeed
+      ),
+      0.0,
+      1.0
+    );
+
+  const colorSlow =
+    vec3(
+      0.1,
+      0.4,
+      1.0
+    );
+
+  const colorFast =
+    vec3(
+      1.0,
+      0.2,
+      0.5
+    );
+
+  particleMaterial.colorNode =
+    vec4(
+      mix(
+        colorSlow,
+        colorFast,
+        speedRatio
+      ),
+      0.8
+    );
+
+  // ==================================================
+  // GEOMETRÍA
+  // ==================================================
+
+  const geometry =
+    new THREE.PlaneGeometry(
+      1,
+      1
+    );
+
+  // ==================================================
+  // INSTANCED MESH
+  // ==================================================
+
+  const mesh =
+    new THREE.InstancedMesh(
+      geometry,
+      particleMaterial,
+      count
+    );
+
+  // Muy importante:
+  // El tamaño de las instancias está controlado
+  // por el SpriteNodeMaterial.
+  mesh.frustumCulled = false;
+
+  scene.add(
+    mesh
+  );
+
+  // ==================================================
+  // RETORNO
+  // ==================================================
 
   return {
+
     uniforms,
-    stepSimulation: () => {
-      renderer.compute(computeNode);
+
+    mesh,
+
+    stepSimulation() {
+
+      renderer.compute(
+        computeNode
+      );
     },
-    reset: () => {
+
+    reset() {
+
       initData();
-      positionBuffer.value.array.set(positionArray);
-      velocityBuffer.value.array.set(velocityArray);
-      positionBuffer.value.needsUpdate = true;
-      velocityBuffer.value.needsUpdate = true;
+
+      positionBuffer.value.array.set(
+        positionArray
+      );
+
+      velocityBuffer.value.array.set(
+        velocityArray
+      );
+
+      positionBuffer.value.needsUpdate =
+        true;
+
+      velocityBuffer.value.needsUpdate =
+        true;
     }
   };
 }
+
