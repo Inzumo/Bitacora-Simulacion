@@ -81,8 +81,12 @@ export function createSimulation({ renderer, scene, params, count }) {
     velocityArray[i3 + 2] = (Math.random() - 0.5) * 0.1;
   }
 
-  const positionBuffer = instancedArray(positionArray, 'vec3');
-  const velocityBuffer = instancedArray(velocityArray, 'vec3');
+  // Atributos de almacenamiento explícitos
+  const posAttribute = new THREE.StorageInstancedBufferAttribute(positionArray, 3);
+  const velAttribute = new THREE.StorageInstancedBufferAttribute(velocityArray, 3);
+
+  const positionBuffer = instancedArray(posAttribute);
+  const velocityBuffer = instancedArray(velAttribute);
 
   // ============================================================
   // COMPUTE SHADER TSL
@@ -165,7 +169,7 @@ export function createSimulation({ renderer, scene, params, count }) {
       renderer.compute(computeNode);
     },
     reset: () => {
-      // Reescritura directa sobre los TypedArrays del closure
+      // Modificar directamente la memoria de los arrays
       for (let i = 0; i < count; i++) {
         const i3 = i * 3;
         const radius = 2.0 * Math.sqrt(Math.random());
@@ -181,12 +185,9 @@ export function createSimulation({ renderer, scene, params, count }) {
         velocityArray[i3 + 2] = (Math.random() - 0.5) * 0.1;
       }
 
-      // Notificar actualización al atributo de buffer correspondiente
-      const posAttr = positionBuffer.value || positionBuffer.attribute || positionBuffer.nodeAttribute;
-      const velAttr = velocityBuffer.value || velocityBuffer.attribute || velocityBuffer.nodeAttribute;
-
-      if (posAttr) posAttr.needsUpdate = true;
-      if (velAttr) velAttr.needsUpdate = true;
+      // Notificar a WebGPU que los atributos cambiaron
+      posAttribute.needsUpdate = true;
+      velAttribute.needsUpdate = true;
     }
   };
 }
