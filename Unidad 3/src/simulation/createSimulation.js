@@ -51,7 +51,11 @@ export function createSimulation({ renderer, scene, params, count }) {
     uCurrentCenter
   };
 
-  // DATOS Y BUFFERS
+  // INSTANCED ARRAYS DE TSL (Buffer de almacenamiento GPU)
+  const positionBuffer = instancedArray(count, 'vec3');
+  const velocityBuffer = instancedArray(count, 'vec3');
+
+  // Inicialización de partículas en la GPU
   const positionArray = new Float32Array(count * 3);
   const velocityArray = new Float32Array(count * 3);
 
@@ -74,11 +78,9 @@ export function createSimulation({ renderer, scene, params, count }) {
 
   initData();
 
-  const posAttribute = new THREE.StorageInstancedBufferAttribute(positionArray, 3);
-  const velAttribute = new THREE.StorageInstancedBufferAttribute(velocityArray, 3);
-
-  const positionBuffer = instancedArray(posAttribute);
-  const velocityBuffer = instancedArray(velAttribute);
+  // Asignar los arrays iniciales a los buffers
+  positionBuffer.value.array.set(positionArray);
+  velocityBuffer.value.array.set(velocityArray);
 
   // COMPUTE SHADER TSL
   const computeUpdate = Fn(() => {
@@ -123,30 +125,25 @@ export function createSimulation({ renderer, scene, params, count }) {
 
   const computeNode = computeUpdate().compute(count);
 
-  // MATERIAL
-  const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute(
-    'position',
-    new THREE.BufferAttribute(new Float32Array([0, 0, 0]), 3)
-  );
-
+  // MATERIAL & MESH DE PARTÍCULAS
   const particleMaterial = new THREE.SpriteNodeMaterial({
     transparent: true,
     blending: THREE.AdditiveBlending,
     depthWrite: false
   });
 
-  particleMaterial.positionNode = positionBuffer.element(instanceIndex);
+  // Vinculación correcta de attributos en TSL WebGPU
+  particleMaterial.positionNode = positionBuffer.toAttribute();
   particleMaterial.scaleNode = uParticleSize;
 
-  const velNode = velocityBuffer.element(instanceIndex);
+  const velNode = velocityBuffer.toAttribute();
   const speedRatio = clamp(length(velNode).div(uMaxSpeed), 0.0, 1.0);
   const colorSlow = vec3(0.1, 0.4, 1.0);
   const colorFast = vec3(1.0, 0.2, 0.5);
 
   particleMaterial.colorNode = vec4(mix(colorSlow, colorFast, speedRatio), 0.8);
 
-  const mesh = new THREE.InstancedMesh(geometry, particleMaterial, count);
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), particleMaterial);
   mesh.count = count;
   scene.add(mesh);
 
@@ -157,8 +154,10 @@ export function createSimulation({ renderer, scene, params, count }) {
     },
     reset: () => {
       initData();
-      posAttribute.needsUpdate = true;
-      velAttribute.needsUpdate = true;
+      positionBuffer.value.array.set(positionArray);
+      velocityBuffer.value.array.set(velocityArray);
+      positionBuffer.value.needsUpdate = true;
+      velocityBuffer.value.needsUpdate = true;
     }
   };
 }
