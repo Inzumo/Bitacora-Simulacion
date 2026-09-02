@@ -145,4 +145,8 @@ export function createSimulation({ renderer, scene, params, count = 300000 }) {
     stepSimulation,
     dispose
   };
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 3cac90b810a9d2f99e41bbe9cd5932030b100243

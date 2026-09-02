@@ -386,4 +386,8 @@ main().catch((error) => {
   pre.style.cssText = 'position:fixed;inset:16px;white-space:pre-wrap;color:#fff;z-index:50';
   pre.textContent = String(error?.stack || error);
   document.body.append(pre);
+<<<<<<< HEAD
 });
+=======
+});
+>>>>>>> 3cac90b810a9d2f99e41bbe9cd5932030b100243
