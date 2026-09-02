@@ -1,4 +1,4 @@
-```js
+js
 import * as THREE from 'three/webgpu';
 import { createSimulation } from './simulation/createSimulation.js';
 
@@ -15,7 +15,7 @@ async function init() {
 
     const style = document.createElement('style');
 
-    style.innerHTML = `
+    style.innerHTML = 
       * {
         margin: 0;
         padding: 0;
@@ -75,7 +75,7 @@ async function init() {
         word-break: break-word;
         color: #ffb3c1;
       }
-    `;
+    ;
 
     document.head.appendChild(style);
 
@@ -403,7 +403,7 @@ function showError(error) {
   errorElement.id =
     'error-message';
 
-  errorElement.innerHTML = `
+  errorElement.innerHTML =
     <div class="error-box">
 
       <h1>ERROR DE WEBGPU</h1>
@@ -420,7 +420,7 @@ function showError(error) {
       <pre>${escapeHtml(message)}</pre>
 
     </div>
-  `;
+  ;
 
   document.body.appendChild(
     errorElement
