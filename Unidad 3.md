@@ -81,7 +81,7 @@ Para mí, esta parte representa el momento después de la liberación de energí
 En general, la intención es que **la música me sirva como guía para conducir el instrumento**, pero que la simulación no sea una animación completamente predeterminada. Yo escucho la canción, identifico cuándo se está acumulando tensión y cuándo llega el momento de liberarla, y utilizo el mouse y la Barra Espaciadora para llevar esas sensaciones al movimiento de las partículas.
 
 **Link**
-https://inzumo.github.io/Bitacora-Simulacion/
+[https://inzumo.github.io/Bitacora-Simulacion/](https://inzumo.github.io/Preuba-Simulacion-actividad-3/)
 
 ## Tabla de Criterios
 
