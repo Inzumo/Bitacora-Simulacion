@@ -1,1 +1,3 @@
-Lo primero que pense fue realizar esta unidad con luciernagas pero despues mirtando lo senti un poquito basico y ya era algo que pasaba en la naturalexa con normalidad y tambien fue el profesor que dio el esste ejemplo
+Lo primero que pense fue realizar esta unidad con luciernagas pero despues mirtando lo senti un poquito basico y ya era algo que pasaba en la naturalexa con normalidad y tambien fue el profesor que dio el este ejemplo asi que lo desvarte.
+Luego pense en mis gustos y dije hey que tal algo con poquemon ypense en irme con un tema de pokemon plationo que es el vombate contra la campeona de la region Cyntia que su musica es de un piano pero no supe como llevar bien la idea asiq eu tambien las descarte.
+Por potro lado dije hey que tal con un lego pero en si los legos solo no tendria sentido para este trabajo y mire un coete que yo tengo armafo y dije no un coete o legos regados sino estrccturas echas con legos o estructuraas normales lo mejor que saliera
