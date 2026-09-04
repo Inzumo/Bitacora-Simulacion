@@ -5,3 +5,4 @@ Luego pense en mis gustos y dije hey que tal algo con poquemon ypense en irme co
 Por potro lado dije hey que tal con un lego pero en si los legos solo no tendria sentido para este trabajo y mire un coete que yo tengo armafo y dije no un coete o legos regados sino estrccturas echas con legos o estructuraas normales lo mejor que saliera
 
 
+https://editor.p5js.org/Izumy/full/7A6ObM917
