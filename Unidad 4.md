@@ -23,4 +23,12 @@ Luego vino un dolor de cabeza con la interacción. En una primera prueba le ped�
 Tuve que ponerme a corregir eso para que la simulación y el audio fueran continuos. Logré que al hacer clic sobre una ficha individual no se detuviera la simulación, sino que la ficha recibiera un "empujón" que altera su velocidad y desfasa su ritmo temporalmente hasta que se vuelve a sincronizar con las demás según el valor de $K$. También rescaté la estética en 3D de las fichas con sus studs y sus sombras para que realmente pareciera un ensamble de LEGOs interactivo y no una interfaz genérica.
 
 
+Leí y verifiqué que mi proyecto cumple con los requisitos mínimos de la unidad: 25 puntos.
 
+Puedo explicar claramente qué representa cada variable del modelo de Kuramoto en mi proyecto: 25 puntos.
+
+Puedo explicar claramente cómo las variables del modelo producen el comportamiento observado en mi proyecto: 25 puntos.
+
+Puedo demostrar que mi proyecto cumple con los objetivos establecidos en la unidad: 25 puntos.
+
+Total 100 puntos
