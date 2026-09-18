@@ -104,9 +104,6 @@ depende de ningún archivo.
 
 ---
 
-
----
-
 ## Autoevaluación
 
 **Cumplimiento del encargo (25/25)**
