@@ -104,11 +104,6 @@ depende de ningún archivo.
 
 ---
 
-## Lo que me falta
-
-- Subir las 6 imágenes a la carpeta `img/`.
-- Probar todo en pantalla grande.
-- Escribir la reflexión final después de presentar.
 
 ---
 
@@ -116,22 +111,26 @@ depende de ningún archivo.
 
 **Cumplimiento del encargo (25/25)**
 La presentación interpreta el guion con un sistema dinámico de
-partículas, funciona en pantalla completa y tiene cambio ES/PT.
+partículas. 
+
+Funciona en pantalla completa y tiene cambio ES/PT.
 
 **Relaciones estructurales (25/25)**
 Hay tres relaciones: cohesión dentro de cada grupo, tensión
-entre grupos, y enlaces por proximidad. Cada una significa algo.
+entre grupos, y enlaces por proximidad. 
+
+Cada una significa algo.
 
 **Comportamiento y significado (25/25)**
-Cada cambio del sistema responde a una frase del guion. No hay
-movimiento decorativo.
+Cada cambio del sistema responde a una frase del guion. 
+No hay movimientos decorativo.
 
 **Explicación y demostración (25/25)**
 Puedo mostrar la presentación funcionando y explicar cada
 decisión.
 
+Si completamente
+
 ---
 
-## Reflexión final
 
-[Este espacio lo escribo cuando termine la presentación.]
