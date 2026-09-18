@@ -1,5 +1,7 @@
 # Bitácora — Unidad 5
 
+https://inzumo.github.io/Unidad-5-/
+
 ## Cómo arranqué
 
 Al principio pensé en construir un sistema de partículas flotantes con efectos vistosos que reaccionaran al puntero del mouse. Sin embargo, analizando los referentes y las bases de la unidad, comprendí que replicar un estilo puramente estético caería en la mera decoración. El objetivo de este proyecto no es poblar la pantalla con elementos sin sentido, sino hacer que cada fuerza física responda a una intención narrativa.
@@ -12,22 +14,6 @@ Para materializar esta dinámica, dividí el sistema en dos núcleos de elemento
 - **Nuevas energías (Innovación):** nodos livianos, de respuesta rápida, alta agitación y un color turquesa vibrante.
 
 El foco de la propuesta no está en los nodos individuales, sino en **las fuerzas y vínculos que se forman entre ellos**.
-
----
-
-## Los cinco momentos
-
-Mapeé la progresión narrativa del guion con cinco estados dinámicos del sistema:
-
-| Momento | Escenas | Qué hace el sistema | Qué significa |
-|---|---|---|---|
-| 1 | 1–2 | Nodos pesados agrupados con enlaces rígidos; partículas livianas orbitando lejos. | Estructura rígida, alta inercia y status quo. |
-| 2 | 3–4 | Las partículas livianas se introducen en la red, estirando los vínculos. | Fricción, ingreso de nueva energía y resistencia al cambio. |
-| 3 | 5–6 | Choques de velocidad, deformación elástica y pérdida de masa del grupo tradicional. | Transferencia de carga, negociación y pérdida de rigidez. |
-| 4 | 7–10 | Reconfiguración de la topología; los nodos turquesa asumen la atracción del centro. | Asunción del liderazgo y redistribución de la fuerza. |
-| 5 | 11–13 | Red fluida, con equilibrio de distancias y rápida propagación de movimiento. | Ventaja competitiva, cohesión e integración intergeneracional. |
-
-Con esta estructura garantizo que cada transición responda directamente a una sección del discurso y no a un adorno aleatorio.
 
 ---
 
