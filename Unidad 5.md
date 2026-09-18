@@ -1,10 +1,4 @@
 # Bitácora — Unidad 5
-## Relevo generacional para el Fórum UPB
-
-
-
----
-
 ## Cómo Empece
 
 Lo primero que pensé fue en hacer una simulación con el polvo de
