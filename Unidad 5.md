@@ -1,6 +1,5 @@
 # Bitácora — Unidad 5
 
----
 ## Cómo arranqué
 
 Al principio pensé en construir un sistema de partículas flotantes con efectos vistosos que reaccionaran al puntero del mouse. Sin embargo, analizando los referentes y las bases de la unidad, comprendí que replicar un estilo puramente estético caería en la mera decoración. El objetivo de este proyecto no es poblar la pantalla con elementos sin sentido, sino hacer que cada fuerza física responda a una intención narrativa.
