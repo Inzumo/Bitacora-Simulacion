@@ -15,6 +15,7 @@ Como estoy jugando Persona 3 Reload, quise que toda la dirección de arte y la a
 En lugar de diseñar escenarios estáticos o animaciones predefinidas, decidí enfocar el diseño en comportamientos vivos. Me interesaba ver cómo el desorden visual de la introducción se va transformando poco a poco en estructuras orgánicas y movimientos colectivos a medida que avanza el tema.
 
 Toda la paleta de colores (azules profundos, cian, blanco y ese verde fosforescente característico) y la densidad de los trazos están pensadas para evocar la estética del juego, permitiéndome a mí como intérprete decidir cuándo la pantalla debe sentirse limpia y fluida o cuándo debe cargarse de caos y redes complejas durante los momentos más intensos del tema.
+
 ---
 
 ## Auto evaluacion
