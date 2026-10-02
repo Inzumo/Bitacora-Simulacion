@@ -80,6 +80,10 @@ Para mí, esta parte representa el momento después de la liberación de energí
 
 En general, la intención es que **la música me sirva como guía para conducir el instrumento**, pero que la simulación no sea una animación completamente predeterminada. Yo escucho la canción, identifico cuándo se está acumulando tensión y cuándo llega el momento de liberarla, y utilizo el mouse y la Barra Espaciadora para llevar esas sensaciones al movimiento de las partículas.
 
+## Problemas que tuve
+
+La verdad, todo fue un caos porque en ningún momento estaba saliendo como yo quería. Intentaba cambiar algo y muchas veces terminaba dañando absolutamente todo. Finalmente llegamos a esta versión, que la verdad tampoco me convence al 100%, pero ya llevaba posponiendo esto por mucho tiempo.
+
 **Link**
 [https://inzumo.github.io/Bitacora-Simulacion/](https://inzumo.github.io/Preuba-Simulacion-actividad-3/)
 
@@ -88,8 +92,8 @@ En general, la intención es que **la música me sirva como guía para conducir 
 | Criterio | Peso | Valoración | Qué debe demostrar la evidencia  |
 | :--- | :---: | :---: | :--- |
 | **Trazabilidad y comprensión del sistema.** | **25** | **25** | Puedo señalar y explicar estado, fuerzas, integración, render y controles; además puedo ubicar qué partes produjo o modificó la IA. |
-| **Verificación del algoritmo de fuerzas** | **25** | **25** | Estudié en detalle el proyecto y aunque no comprenda toda la sintaxis, puedo identificar su arquitectura, sus partes, puedo aislar una fuerza central, formular una predicción, la ejecuté ya analicé, comparé el resultado, cambié deliberadamente un signo o parámetro y expliqué la diferencia. |
+| **Verificación del algoritmo de fuerzas** | **25** | **20** | Estudié en detalle el proyecto y aunque no comprenda toda la sintaxis, puedo identificar su arquitectura, sus partes, puedo aislar una fuerza central, formular una predicción, la ejecuté ya analicé, comparé el resultado, cambié deliberadamente un signo o parámetro y expliqué la diferencia. |
 | **Diseño de fuerzas e intención** | **20** | **20** | Las fuerzas y sus parámetros hacen perceptible una intención; el comportamiento surge de la dinámica y no de trayectorias previamente dibujadas. |
-| **Instrumento, score e interpretación** | **15** | **15** | El score conecta la escucha con decisiones; escogí pocos controles expresivos y puedo conducir el sistema en vivo sin que el audio lo controle automáticamente. |
+| **Instrumento, score e interpretación** | **15** | **13** | El score conecta la escucha con decisiones; escogí pocos controles expresivos y puedo conducir el sistema en vivo sin que el audio lo controle automáticamente. |
 | **Experimentación y criterio frente a la IA** | **10** | **10** | Comparé alternativas, registré hallazgos y descartes, corregí propuestas de IA y puedo justificar por qué conservé la versión presentada. |
 | **Entrega técnica y documentación** | **5** | **5** | URL pública funcional desplegada a 60 FPS estables con bitácora estructurada que permite reconstruir todo el proceso. |
