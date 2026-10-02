@@ -19,13 +19,13 @@ Toda la paleta de colores (azules profundos, cian, blanco y ese verde fosforesce
 ---
 
 ## Auto evaluacion
-Cumplimiento del encargo: mi instrumento utiliza tecnología web, funciona en tiempo real y permite interpretar la pieza musical elegida.
-Comprensión y verificación: puedo explicar y defender cómo está construido el sistema, qué perciben los agentes y cómo calculan sus acciones. Puedo predecir y verificar los cambios al modificar un parámetro.
-Diseño e intención: puedo justificar la selección y combinación de comportamientos y relacionarlos con mi interpretación musical.
-Interpretación humana: mi score y mis controles permiten conducir el sistema en vivo y responder a su comportamiento.
-Total: 100 puntos. La autoevaluación se sustenta durante la presentación.
-Cumplimiento del encargo: mi instrumento utiliza tecnología web, funciona en tiempo real y permite interpretar la pieza musical elegida.
-Comprensión y verificación: puedo explicar y defender cómo está construido el sistema, qué perciben los agentes y cómo calculan sus acciones. Puedo predecir y verificar los cambios al modificar un parámetro.
-Diseño e intención: puedo justificar la selección y combinación de comportamientos y relacionarlos con mi interpretación musical.
-Interpretación humana: mi score y mis controles permiten conducir el sistema en vivo y responder a su comportamiento.
-Total: 100 puntos. La autoevaluación se sustenta durante la presentación.
+Cumplimiento del encargo: mi instrumento utiliza tecnología web, funciona en tiempo real y permite interpretar la pieza musical elegida. 25
+
+Comprensión y verificación: puedo explicar y defender cómo está construido el sistema, qué perciben los agentes y cómo calculan sus acciones. Puedo predecir y verificar los cambios al modificar un parámetro. 25
+
+Diseño e intención: puedo justificar la selección y combinación de comportamientos y relacionarlos con mi interpretación musical. 25
+
+Interpretación humana: mi score y mis controles permiten conducir el sistema en vivo y responder a su comportamiento. 25
+
+Total: 100 puntos
+
