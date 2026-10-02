@@ -37,21 +37,13 @@ Para garantizar la legibilidad en pantallas grandes de conferencia, incorporé u
 
 **Renderizado de archivos externos.** Tuve incovenientes de carga con fuentes e imágenes externas. Para asegurar la estabilidad de la presentación, integré la lógica en archivos con rutas relativas limpias e integré el marcado de UI de forma nativa.
 
+Las imagenes siguen sin cargar aparece un cudro negro
+
 ---
 
 ## Autoevaluación
 
-**Cumplimiento del encargo (25/25)**
-La presentación interpreta secuencialmente el guion suministrado a través de un sistema generativo a pantalla completa, adaptado para eventos de gran formato.
 
-**Relaciones estructurales (25/25)**
-Existen tres fuerzas claras: cohesión interna por proximidad, repulsión para evitar colapsos y vínculos elásticos que cambian su constante de rigidez según la escena.
-
-**Comportamiento y significado (25/25)**
-Cada variación de velocidad, masa, tensión o viscosidad está directamente vinculada a una idea conceptual del discurso sobre el relevo generacional.
-
-**Explicación y demostración (25/25)**
-Puedo ejecutar la presentación en tiempo real, navegar por las escenas y justificar técnicamente cada parámetro de la simulación.
 
 ---
 
