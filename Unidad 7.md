@@ -6,7 +6,7 @@ https://inzumo.github.io/Unidad-7/
 ## Cómo arranqué
 
 Como en la entrega anteror hice referencia a persona 3 quice  irme por la empreza que hizo este juego que seria atlus para empezar
-Atlus es una de las empresas de videojuegos japonesa más influyentes en el género de los RPG. Fundada originalmente en 1986 y con sede en Tokio, actualmente opera como una subsidiaria de SEGA. Su mascota oficial es el carismático demonio navideño Jack Frost
+Atlus es una de las empresas de videojuegos japonesa más influyentes en el género de los RPG. Fundada originalmente en 1986 y con sede en Tokio, actualmente opera como una subsidiaria de SEGA. Su mascota oficial es el carismático demonio navideño Jack Frost que aparece en diferentes de sus juegos
 
 La idea que queria tramiir era identidad
 
