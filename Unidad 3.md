@@ -82,7 +82,7 @@ En general, la intención es que **la música me sirva como guía para conducir 
 
 ## Problemas que tuve
 
-La verdad, todo fue un caos porque en ningún momento estaba saliendo como yo quería. Intentaba cambiar algo y muchas veces terminaba dañando absolutamente todo. Finalmente llegamos a esta versión, que la verdad tampoco me convence al 100%, pero ya llevaba posponiendo esto por mucho tiempo.
+La verdad, todo fue un caos porque en ningún momento estaba saliendo como yo quería. Intentaba cambiar algo y muchas veces terminaba dañando absolutamente todo o solo aparecía una particula. Finalmente llegamos a esta versión, que la verdad tampoco me convence al 100%, pero ya llevaba posponiendo esto por mucho tiempo y esta es la ultima ocasión que lo puedo presentar.
 
 **Link**
 [https://inzumo.github.io/Bitacora-Simulacion/](https://inzumo.github.io/Preuba-Simulacion-actividad-3/)
