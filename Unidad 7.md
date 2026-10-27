@@ -1,4 +1,4 @@
-# Bitácora — Unidad 6
+# Bitácora — Unidad 7
 
 https://inzumo.github.io/Unidad-7/
 
