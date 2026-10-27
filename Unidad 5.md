@@ -29,21 +29,21 @@ Para garantizar la legibilidad en pantallas grandes de conferencia, incorporé u
 
 ## Problemas que tuve
 
-**Sincronización de eventos de clic.** Al principio, interactuar con la interfaz del texto avanzaba la simulación o desencadenaba clicks no deseados en el canvas. Lo solucioné aislando la capa de la UI con propiedades de puntero en CSS (`pointer-events: none` y `auto` en elementos interactivos).
-
-**Desbordamiento por sobreexcitación de fuerzas.** Durante los momentos de fricción, las partículas livianas adquirían demasiada velocidad y salían del encuadre. Lo corregí aplicando un límite a los vectores de velocidad (`constrain`) y ajustando el coeficiente de amortiguación (`damping`).
-
-**Despliegue e integración en GitHub Pages.** El pipeline de despliegue en GitHub Actions arrojaba un error por falta de permisos en el repositorio. Lo solucioné configurando el origen de publicación en la sección *Settings > Pages* hacia **GitHub Actions**.
-
-**Renderizado de archivos externos.** Tuve incovenientes de carga con fuentes e imágenes externas. Para asegurar la estabilidad de la presentación, integré la lógica en archivos con rutas relativas limpias e integré el marcado de UI de forma nativa.
-
 Las imagenes siguen sin cargar aparece un cudro negro
 
 ---
 
 ## Autoevaluación
 
+Cumplimiento del encargo: mi presentación interpreta el guion mediante una estructura dinámica y funciona en pantalla completa. 25
 
+Relaciones estructurales: puedo explicar qué relaciones existen en mi sistema, qué significan y cómo organizan sus elementos.25
+
+Comportamiento y significado: puedo relacionar los cambios de movimiento, estructura, densidad o composición con una intención comunicativa.20
+
+Explicación y demostración: puedo presentar la propuesta funcionando, explicar mis decisiones y demostrar cómo el sistema construye sentido. 20
+
+90/100
 
 ---
 
