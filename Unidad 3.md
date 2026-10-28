@@ -12,13 +12,6 @@ Quería que la simulación tuviera momentos en los que las partículas pareciera
 
 Después agregué la posibilidad de cambiar la atracción por repulsión con la Barra Espaciadora. Esto terminó siendo una de las partes más importantes del proyecto porque me permitía pasar directamente de un estado de cohesión a uno de expansión. En lugar de tener una animación que simplemente siguiera su curso, podía intervenir en ella y provocar el cambio en tiempo real.
 
-$$
-\vec{F}_{\text{total}} =
-\vec{F}_{\text{radial}} +
-\vec{F}_{\text{vortex}} +
-\vec{F}_{\text{wind}} +
-\vec{F}_{\text{drag}}
-$$
 
 Cada fuerza cumple una función diferente dentro del comportamiento. La fuerza radial controla principalmente si las partículas se acercan o se alejan, el vórtice genera el movimiento de rotación, el viento permite agregar una fuerza externa y el drag ayuda a controlar la velocidad para que el sistema no se vuelva demasiado inestable.
 
@@ -42,9 +35,6 @@ A partir de eso decidí trabajar con una tensión entre **cohesión y expansión
 
 Al comienzo, cuando la música se siente más contenida, utilizo la fuerza radial de atracción:
 
-$$
-k < 0
-$$
 
 Esto hace que las partículas se acerquen al cursor y formen una masa más concentrada. Visualmente quería que se sintiera como un cuerpo que tiene mucha energía internamente, pero que todavía está contenido.
 
