@@ -29,7 +29,7 @@ Para garantizar la legibilidad en pantallas grandes de conferencia, incorporé u
 
 ## Problemas que tuve
 
-Las imagenes siguen sin cargar aparece un cudro negro
+A pesar de varios intentos las imágenes no me quisieron dar por alguna razón que ni la ia me puedo ayudar 
 
 ---
 
