@@ -17,6 +17,7 @@ Al principio solo hice que las partículas crecieran con la velocidad, pero se v
 Las partículas se quedaban en un cuadro pequeño en el centro. Ajusté el volumen según lo que ve la cámara, para que el sistema ocupe todo el fondo. El fondo es casi negro con un poco de azul para que el neón resalte.
 
 Tengo viento, fuerza radial (atracción o repulsión según el signo), vórtice y fricción. La quinta es mi fuerza propia: turbulencia. Se lo pedí a la IA y ella propuso una fórmula que depende de la posición y del tiempo. Me gustó porque se siente orgánica, como el humo, y no empuja todo hacia un solo lado.
+
 ---
 
 ## Tabla de Criterios
