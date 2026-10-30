@@ -5,4 +5,6 @@ lo interprete de la manera de que no me molesto de echo no me interesa lo que lo
 la verdad es que hay tantas maneras de aprender y que vale la pena intentar si algo no Sale como quiero es normal equivocarse es humano puede que una ia lo pueda hacer perfecto a la primera me molesta no yo se que lo hice con toda las intenciones del mundo de Sacar una buena idea desde lo que e aprendido a lo largo de los años dentro y fuera de la carrera 
 
 
+Lo que le pedí a la ia que hiciera que tomara quería un paint para escribir 
+
 https://inzumo.github.io/Unidad-8/
